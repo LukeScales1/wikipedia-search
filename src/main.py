@@ -1,19 +1,40 @@
 import requests
 from fastapi import FastAPI
+from requests import Session
 
 from schema.parser import ParsedText, ProcessedText
 from schema.scraper import (
-    ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
-    parse_article_html_or_none,
+    Article, ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
+    parse_article_html_or_none, parse_article_titles,
 )
+from services.index import create_inverted_index
 from services.nlp import lemmatize, set_up_nltk
-from services.parser import parse_text_from_html
+from services.parser import get_parsed_text, parse_text_from_html
 from services.scraper import get_random_articles, get_article_content
 
 set_up_nltk()
 app = FastAPI()
 s = requests.Session()
 text_processor = lemmatize
+INDEX = {}
+
+
+def _set_up_index(session: Session):
+    global INDEX
+    articles = get_random_articles(session, ArticleTitlesGet(rnlimit=5))
+    INDEX = create_inverted_index(
+        session=session,
+        articles=[
+            Article(
+                title=entry["title"]
+            )
+            for entry in parse_article_titles(articles)
+        ],
+        text_processor=text_processor
+    )
+
+
+_set_up_index(s)
 
 
 @app.get("/articles", response_model=ArticleTitlesGetResponse)
@@ -34,8 +55,6 @@ async def get_parsed_content(page_name: str):
 
 
 @app.get("/process/{page_name}", response_model=ProcessedText)
-async def get_parsed_content(page_name: str):
-    content = get_article_content(s, ContentGet(page=page_name))
-    html = parse_article_html_or_none(content["data"])
-    text = parse_text_from_html(html)
+async def get_processed_content(page_name: str):
+    text = get_parsed_text(s, page_name)
     return text_processor(text)

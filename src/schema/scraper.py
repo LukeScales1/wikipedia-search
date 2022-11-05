@@ -63,12 +63,12 @@ Response Schema
 """
 
 
-class Articles(BaseModel):
+class Article(BaseModel):
     title: str
 
 
 class ArticleIterator:
-    def __init__(self, articles: list[Articles]):
+    def __init__(self, articles: list[Article]):
         self.articles = articles
         self.current_index = 0
 
@@ -82,18 +82,22 @@ class ArticleIterator:
         return current_item.title
 
 
+def parse_article_titles(data: dict):
+    query = data.get("query", {})
+    return query.get("random")
+
+
 class ArticleTitlesGetResponse(BaseModel):
-    __root__: list[Articles]
+    __root__: list[Article]
 
     @validator('__root__', pre=True)
     def validate_data(cls, value: dict):
-        query = value.get("query", {})
-        random = query.get("random")
+        data = parse_article_titles(value)
 
-        if not random:
+        if not data:
             raise ValueError("No results returned from fetch titles request!")
 
-        return random
+        return data
 
     def __iter__(self):
         return ArticleIterator(self.__root__)
