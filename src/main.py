@@ -2,7 +2,10 @@ import requests
 from fastapi import FastAPI
 
 from schema.parser import ParsedText
-from schema.scraper import ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse
+from schema.scraper import (
+    ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
+    parse_article_html_or_none,
+)
 from services.parser import parse_text_from_html
 from services.scraper import get_random_articles, get_article_content
 
@@ -23,4 +26,5 @@ async def get_content(page_name: str):
 @app.get("/parse/{page_name}", response_model=ParsedText)
 async def get_parsed_content(page_name: str):
     content = get_article_content(s, ContentGet(page=page_name))
-    return {"text": parse_text_from_html(content["html"])}
+    html = parse_article_html_or_none(content["data"])
+    return {"text": parse_text_from_html(html)}

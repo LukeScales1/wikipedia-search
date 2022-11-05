@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 
 from pydantic import BaseModel, Field, validator
@@ -97,16 +99,20 @@ class ArticleTitlesGetResponse(BaseModel):
         return ArticleIterator(self.__root__)
 
 
+def parse_article_html_or_none(content: dict) -> str | None:
+    content = content.get("parse", {})
+    text = content.get("text", {})
+    return text.get("*")
+
+
 class ContentGetResponse(BaseModel):
-    html: str
+    data: str
 
-    @validator('html', pre=True)
+    @validator('data', pre=True)
     def validate_text(cls, value: dict):
-        content = value.get("parse", {})
-        text = content.get("text", {})
-        html = text.get("*")
+        data = parse_article_html_or_none(value)
 
-        if not html:
+        if not data:
             raise ValueError("No results returned from scrape request!")
 
-        return html
+        return data

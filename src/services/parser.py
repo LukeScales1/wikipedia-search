@@ -1,6 +1,8 @@
-from schema.parser import TEST_TEXT
+from bs4 import BeautifulSoup
 
 
 def parse_text_from_html(html: str) -> str:
-    return TEST_TEXT
-
+    soup = BeautifulSoup(html, 'html.parser')
+    divs = soup.find_all('div')
+    main_text = divs[0].getText()
+    return main_text

@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
-
-TEST_TEXT = "test+text"
+from services.parser import parse_text_from_html
 
 
 class ParsedText(BaseModel):
@@ -12,5 +11,5 @@ class ParsedText(BaseModel):
     @classmethod
     def from_html(cls, html: str) -> ParsedText:
         return cls(
-            text=TEST_TEXT
+            text=parse_text_from_html(html)
         )
