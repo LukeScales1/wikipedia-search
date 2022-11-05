@@ -26,4 +26,4 @@ def get_article_content(session: Session, params: ContentGet) -> dict:
     r = session.get(url=URL, params=params.dict(by_alias=True))
     r.raise_for_status()
 
-    return {"html": r.json()}
+    return {"data": r.json()}
