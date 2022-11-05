@@ -7,16 +7,14 @@
     MIT License
 """
 
-import requests
+from requests.sessions import Session
 
 from schema.scraper import ArticleTitlesGet, ContentGet
 
 URL = "https://en.wikipedia.org/w/api.php"
 
-s = requests.Session()
 
-
-def fetch_random_articles(session, params: ArticleTitlesGet) -> dict:
+def get_random_articles(session: Session, params: ArticleTitlesGet) -> dict:
 
     r = session.get(url=URL, params=params.dict(by_alias=True))
     r.raise_for_status()
@@ -24,7 +22,7 @@ def fetch_random_articles(session, params: ArticleTitlesGet) -> dict:
     return r.json()
 
 
-def scrape_article_content(session, params: ContentGet):
+def get_article_content(session: Session, params: ContentGet) -> dict:
     r = session.get(url=URL, params=params.dict(by_alias=True))
     r.raise_for_status()
 
