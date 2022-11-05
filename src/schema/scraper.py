@@ -1,5 +1,7 @@
 from enum import Enum
 
+from pydantic import BaseModel, Field
+
 
 class DataFormats(Enum):
     """
@@ -24,3 +26,21 @@ class Actions(Enum):
 
     PARSE = "parse"
     QUERY = "query"
+
+
+class ListTypes(Enum):
+    RANDOM = "random"
+
+
+class DefaultParams(BaseModel):
+    action: Actions = Actions.QUERY
+    data_format: DataFormats = Field(alias="format", default=DataFormats.JSON)
+
+    class Config:
+        use_enum_values = True
+
+
+class ArticleTitlesGet(DefaultParams):
+    list_type: ListTypes = Field(alias="list", default=ListTypes.RANDOM)
+    limit: int = Field(alias="rnlimit", default=5)
+    name_space: int = Field(alias="rnnamespace", default=0)
