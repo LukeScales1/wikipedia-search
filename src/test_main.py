@@ -29,3 +29,9 @@ def test_process_content():
     assert response.status_code == 200
     assert response.json()[0] == "creator"
 
+
+def test_search():
+    response = client.get("/search/?q=test%20this%20brilliant%20thing")
+    assert response.status_code == 200
+    assert response.json() == {"results": ["test", "brilliant", "thing"]}
+

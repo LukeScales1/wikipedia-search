@@ -1,5 +1,7 @@
+from typing import Union
+
 import requests
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 from requests import Session
 
 from schema.parser import ParsedText, ProcessedText
@@ -7,6 +9,7 @@ from schema.scraper import (
     Article, ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
     parse_article_html_or_none, parse_article_titles,
 )
+from schema.search import SearchResponse
 from services.index import create_inverted_index
 from services.nlp import lemmatize, set_up_nltk
 from services.parser import get_parsed_text, parse_text_from_html
@@ -58,3 +61,11 @@ async def get_parsed_content(page_name: str):
 async def get_processed_content(page_name: str):
     text = get_parsed_text(s, page_name)
     return text_processor(text)
+
+
+@app.get("/search/", response_model=SearchResponse)
+async def get_results(q: Union[str, None] = Query(default=None)):
+    if q:
+        q = text_processor(q)
+
+    return {"results": q or []}

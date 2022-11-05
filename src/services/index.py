@@ -15,7 +15,6 @@ def create_inverted_index(session: Session, articles: list[Article], text_proces
     }
     doc_lengths = []
     for article in articles:
-        print(article.title)
         doc_term_frequency = Counter()
         doc_text = get_parsed_text(session, article.title)
         doc_text = text_processor(doc_text)
