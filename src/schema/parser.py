@@ -13,3 +13,8 @@ class ParsedText(BaseModel):
         return cls(
             text=parse_text_from_html(html)
         )
+
+
+class ProcessedText(BaseModel):
+    __root__: list[str]
+

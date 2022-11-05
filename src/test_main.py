@@ -12,13 +12,19 @@ def test_get_articles():
 
 
 def test_get_content():
-    response = client.get("/content/Fred%20Pincus")  # random request
+    response = client.get("/content/Linus_Torvalds")
     assert response.status_code == 200
     assert "<div class=" in response.json()["data"]
 
 
 def test_parse_content():
-    response = client.get("/parse/Fred%20Pincus")  # random request
+    response = client.get("/parse/Linus_Torvalds")
     assert response.status_code == 200
-    assert "\n\nFred L. Pincus" in response.json()["text"]
+    assert "Creator and lead developer of the Linux kernel" in response.json()["text"]
+
+
+def test_process_content():
+    response = client.get("/process/Linus_Torvalds")
+    assert response.status_code == 200
+    assert response.json()[0] == "creator"
 
