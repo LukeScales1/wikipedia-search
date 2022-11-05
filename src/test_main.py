@@ -1,9 +1,25 @@
+from unittest import mock
+
 from fastapi.testclient import TestClient
 
-from main import app
+from main import _set_up_index, app, s
 
 client = TestClient(app)
 TEST_SEARCH = "Linus_Torvalds"
+
+
+def _reset_index():
+    _set_up_index(s)
+
+
+def mock_random_article_response(*args, **kwargs) -> dict:
+    return {
+        "query": {
+            "random": [
+                {"title": TEST_SEARCH}
+            ]
+        }
+    }
 
 
 def test_get_articles():
@@ -30,8 +46,10 @@ def test_process_content():
     assert response.json()[0] == "creator"
 
 
+@mock.patch('services.scraper.get_random_articles', mock_random_article_response)
 def test_search():
-    response = client.get("/search/?q=test%20this%20brilliant%20thing")
+    _reset_index()
+    response = client.get("/search/?q=creator")
     assert response.status_code == 200
-    assert response.json() == {"results": ["test", "brilliant", "thing"]}
+    assert response.json() == {"results": {TEST_SEARCH: -0.8239592165010823}}
 

@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Optional, Union
 
 import requests
 from fastapi import FastAPI, Query
@@ -10,29 +10,28 @@ from schema.scraper import (
     parse_article_html_or_none, parse_article_titles,
 )
 from schema.search import SearchResponse
-from services.index import create_inverted_index
+from services.index import create_inverted_index, rank_inverted_docs
 from services.nlp import lemmatize, set_up_nltk
 from services.parser import get_parsed_text, parse_text_from_html
-from services.scraper import get_random_articles, get_article_content
+from services.scraper import get_random_articles, get_article_content, parse_random_articles
 
 set_up_nltk()
 app = FastAPI()
 s = requests.Session()
 text_processor = lemmatize
 INDEX = {}
+NUMBER_OF_ARTICLES = 5
 
 
-def _set_up_index(session: Session):
+def _set_up_index(session: Session, articles: Optional[list[Article]] = None):
     global INDEX
-    articles = get_random_articles(session, ArticleTitlesGet(rnlimit=5))
+
+    if not articles:
+        articles = parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
+
     INDEX = create_inverted_index(
         session=session,
-        articles=[
-            Article(
-                title=entry["title"]
-            )
-            for entry in parse_article_titles(articles)
-        ],
+        articles=articles,
         text_processor=text_processor
     )
 
@@ -65,7 +64,9 @@ async def get_processed_content(page_name: str):
 
 @app.get("/search/", response_model=SearchResponse)
 async def get_results(q: Union[str, None] = Query(default=None)):
+    results = None
     if q:
         q = text_processor(q)
+        results = rank_inverted_docs(q, INDEX)
 
-    return {"results": q or []}
+    return {"results": results or {}}
