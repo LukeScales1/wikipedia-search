@@ -81,9 +81,9 @@ class ArticleIterator:
 
 
 class ArticleTitlesGetResponse(BaseModel):
-    data: list[Articles]
+    __root__: list[Articles]
 
-    @validator('data', pre=True)
+    @validator('__root__', pre=True)
     def validate_data(cls, value: dict):
         query = value.get("query", {})
         random = query.get("random")
@@ -94,4 +94,4 @@ class ArticleTitlesGetResponse(BaseModel):
         return random
 
     def __iter__(self):
-        return ArticleIterator(self.data)
+        return ArticleIterator(self.__root__)
