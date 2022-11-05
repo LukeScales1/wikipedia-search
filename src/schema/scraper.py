@@ -51,7 +51,7 @@ class ArticleTitlesGet(DefaultParams):
     name_space: int = Field(alias="rnnamespace", default=0)
 
 
-class ScrapeArticleGet(DefaultParams):
+class ContentGet(DefaultParams):
     action = Actions.PARSE
     page: str
 
@@ -95,3 +95,18 @@ class ArticleTitlesGetResponse(BaseModel):
 
     def __iter__(self):
         return ArticleIterator(self.__root__)
+
+
+class ContentGetResponse(BaseModel):
+    html: str
+
+    @validator('html', pre=True)
+    def validate_text(cls, value: dict):
+        content = value.get("parse", {})
+        text = content.get("text", {})
+        html = text.get("*")
+
+        if not html:
+            raise ValueError("No results returned from scrape request!")
+
+        return html
