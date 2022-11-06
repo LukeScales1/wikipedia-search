@@ -12,7 +12,7 @@ def set_up_nltk():
     nltk.download('omw-1.4')
 
 
-def basic_preprocess(text):
+def basic_preprocess(text: str) -> list[str]:
     # BASIC PREPROCESS: remove special characters, punctuation, numbers
     # replace hyphens w/ whitespace - make hyphenated words two individual terms; lowercase
     text = text.replace("-", " ").lower()
@@ -29,18 +29,18 @@ def basic_preprocess(text):
     return text.split()
 
 
-def stopword_removal(text):
+def stopword_removal(text: str) -> list[str]:
     stop_words = set(stopwords.words('english'))
     return [word for word in basic_preprocess(text) if word not in stop_words]
 
 
-def stem(text):
+def stem(text: str) -> list[str]:
     stemmer = PorterStemmer()
     words = stopword_removal(text)
     return [stemmer.stem(word) for word in words]
 
 
-def lemmatize(text):
+def lemmatize(text: str) -> list[str]:
     lemmatizer = WordNetLemmatizer()
     words = stopword_removal(text)
     return [lemmatizer.lemmatize(w) for w in words]

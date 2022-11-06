@@ -1,19 +1,44 @@
-import requests
-from fastapi import FastAPI
+from typing import Optional, Union
 
+import requests
+from fastapi import FastAPI, Query
+from requests import Session
+
+from schema.index import Index
 from schema.parser import ParsedText, ProcessedText
 from schema.scraper import (
-    ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
+    Article, ArticleTitlesGet, ArticleTitlesGetResponse, ContentGet, ContentGetResponse,
     parse_article_html_or_none,
 )
+from schema.search import SearchResponse
+from services.index import create_or_update_inverted_index, rank_documents
 from services.nlp import lemmatize, set_up_nltk
-from services.parser import parse_text_from_html
-from services.scraper import get_random_articles, get_article_content
+from services.parser import get_parsed_text, parse_text_from_html
+from services.scraper import get_random_articles, get_article_content, parse_random_articles
 
 set_up_nltk()
 app = FastAPI()
 s = requests.Session()
 text_processor = lemmatize
+INDEX = Index()
+NUMBER_OF_ARTICLES = 200
+
+
+def _index_documents(session: Session, articles: Optional[list[Article]] = None):
+    global INDEX
+
+    if not articles:
+        articles = parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
+
+    INDEX = create_or_update_inverted_index(
+        session=session,
+        articles=articles,
+        text_processor=text_processor,
+        index=INDEX
+    )
+
+
+_index_documents(s)
 
 
 @app.get("/articles", response_model=ArticleTitlesGetResponse)
@@ -34,8 +59,16 @@ async def get_parsed_content(page_name: str):
 
 
 @app.get("/process/{page_name}", response_model=ProcessedText)
-async def get_parsed_content(page_name: str):
-    content = get_article_content(s, ContentGet(page=page_name))
-    html = parse_article_html_or_none(content["data"])
-    text = parse_text_from_html(html)
+async def get_processed_content(page_name: str):
+    text = get_parsed_text(s, page_name)
     return text_processor(text)
+
+
+@app.get("/search/", response_model=SearchResponse)
+async def get_results(q: Union[str, None] = Query(default=None)):
+    results = None
+    if q:
+        q = text_processor(q)
+        results = rank_documents(q, INDEX)
+
+    return {"results": results or {}}
