@@ -1,9 +1,11 @@
 import logging
 import math
 from collections import Counter
+from typing import Callable, Optional
 
 from requests import Session
 
+from schema.index import Index
 from schema.scraper import Article
 from services.parser import get_parsed_text
 
@@ -21,41 +23,32 @@ def bm25_rank(N, n, tf, dl, dl_avg, b=None, k_1=None):
     return (tf / (k_1 * ((1 - b) + b*(dl/dl_avg)) + tf)) * w_rsj
 
 
-def create_inverted_index(session: Session, articles: list[Article], text_processor):
-    inv_index = {
-        "terms": {},
-        "n_docs": 0,
-        "cl": 0,
-        "dl_avg": 0
-    }
-    doc_lengths = []
+def create_or_update_inverted_index(
+        session: Session,
+        articles: list[Article],
+        text_processor: Callable[[str], list[str]],
+        index: Optional[Index] = None
+):
+    if index:
+        index.reset_cached_properties()
+    else:
+        index = Index()
+
     for article in articles:
-        logger.debug(article.title)
-        doc_term_frequency = Counter()
+        logger.info(f"Processing article: {article.title}")
+
         doc_text = get_parsed_text(session, article.title)
         doc_text = text_processor(doc_text)
 
-        dl = len(doc_text)
-        doc_lengths.append(dl)
-        doc_term_frequency.update(doc_text)
-        for term in doc_term_frequency.keys():
-            try:
-                inv_index["terms"][term]
-            except KeyError:
-                inv_index["terms"][term] = {
-                    "docs": {},
-                    "c_tf": 0
-                }
-            term_frequency = doc_term_frequency[term]
-            inv_index["terms"][term]["docs"][article.title] = (term_frequency, dl, doc_term_frequency.values())
-            inv_index["terms"][term]["c_tf"] += term_frequency
-    inv_index["n_docs"] = len(doc_lengths)
-    inv_index["cl"] = sum(doc_lengths)
-    inv_index["dl_avg"] = sum(doc_lengths) / len(doc_lengths)
-    return inv_index
+        index.process_document(document_id=article.title, tokenized_document=doc_text)
+
+    logger.info(f"__Number of documents: {index.number_of_documents}")
+    logger.info(f"__Corpus size: {index.corpus_size}")
+    logger.info(f"__Avg. document length: {index.average_document_length}")
+    return index
 
 
-def rank_inverted_docs(query_terms, inverted_index, **kwargs):
+def rank_inverted_docs(query_terms: list[str], inverted_index: Index, **kwargs):
     results = {}
     query_counter = Counter()
     query_counter.update(query_terms)
