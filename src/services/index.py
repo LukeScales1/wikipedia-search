@@ -14,13 +14,33 @@ logger.setLevel(logging.DEBUG)
 logging.basicConfig()
 
 
-def bm25_rank(N, n, tf, dl, dl_avg, b=None, k_1=None):
+def bm25_rank(
+        total_number_of_documents: int,
+        number_of_documents_containing_term: int,
+        term_frequency_in_document: int,
+        document_length: int,
+        average_document_length: float,
+        b: Optional[float] = None,
+        k_1: Optional[float] = None,
+):
+    """ Rank documents using the Okapi BM25 model https://en.wikipedia.org/wiki/Okapi_BM25.
+
+    If following the original format developed by Stephen E. Robertson & Karen Spärck Jones, coefficient b should be
+    kept between 0.5 and 0.8 and coefficient k_1 should be between 1.2 and 2.0
+    """
     if b is None:
         b = 0.8  # 0.5 <= b <= 0.8
     if k_1 is None:
-        k_1 = 2  # 1.2 <= k <= 2
-    w_rsj = math.log(((N - n + 0.5) / (n + 0.5)))
-    return (tf / (k_1 * ((1 - b) + b*(dl/dl_avg)) + tf)) * w_rsj
+        k_1 = 2.0  # 1.2 <= k <= 2.0
+
+    ratio_numerator = total_number_of_documents - number_of_documents_containing_term + 0.5
+    ratio_denominator = number_of_documents_containing_term + 0.5
+    w_rsj = math.log(ratio_numerator / ratio_denominator)
+
+    b_calc = ((1 - b) + b * (document_length / average_document_length))
+    k_1_calc = (k_1 * b_calc + term_frequency_in_document)
+
+    return (term_frequency_in_document / k_1_calc) * w_rsj
 
 
 def create_or_update_inverted_index(
@@ -69,8 +89,13 @@ def rank_inverted_docs(query_terms: list[str], inverted_index: Index, **kwargs):
                 continue
 
             rank = bm25_rank(
-                N=inverted_index["n_docs"], n=len(inverted_index["terms"][term]["docs"].keys()), tf=doc_entry[0],
-                dl=doc_entry[1], dl_avg=inverted_index["dl_avg"], **kwargs)
+                total_number_of_documents=inverted_index["n_docs"],
+                number_of_documents_containing_term=len(inverted_index["terms"][term]["docs"].keys()),
+                term_frequency_in_document=doc_entry[0],
+                document_length=doc_entry[1],
+                average_document_length=inverted_index["dl_avg"],
+                **kwargs
+                )
 
             for i in range(query_counter[term]):
                 doc_rank.append(rank)
