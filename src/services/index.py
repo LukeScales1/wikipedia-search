@@ -1,7 +1,7 @@
 import logging
 import math
 from collections import Counter
-from typing import Callable, Optional
+from typing import Callable, Iterable, Optional
 
 from requests import Session
 
@@ -49,6 +49,7 @@ def create_or_update_inverted_index(
         text_processor: Callable[[str], list[str]],
         index: Optional[Index] = None
 ):
+    """ Creates or updates existing inverted index model, processes articles and populates index with corpus terms. """
     if index:
         index.reset_cached_properties()
     else:
@@ -68,37 +69,46 @@ def create_or_update_inverted_index(
     return index
 
 
-def rank_inverted_docs(query_terms: list[str], inverted_index: Index, **kwargs):
-    results = {}
-    query_counter = Counter()
-    query_counter.update(query_terms)
+def get_set_of_documents_containing_terms(index: Index, terms: Iterable[str]) -> set[str]:
     matching_docs = set()
-    for query in query_counter.keys():
-        try:
-            doc_ids = inverted_index["terms"][query]["docs"].keys()
-            matching_docs.update(doc_ids)
-        except KeyError:
-            # query term not present in doc corpus
+    for term in terms:
+        documents_containing_term = index.get_term_data(search_term=term).documents_containing_term
+        if not documents_containing_term:
             continue
-    for doc in matching_docs:
-        doc_rank = []
+        matching_docs.update(documents_containing_term)
+
+    return matching_docs
+
+
+def rank_documents(query_terms: list[str], inverted_index: Index, **kwargs):
+    """ Creates a dict of document IDs and ranks for the provided query terms, ordered by rank. """
+    results = {}
+    query_counter = Counter(query_terms)
+
+    matching_docs = get_set_of_documents_containing_terms(
+        index=inverted_index,
+        terms=query_counter.keys()
+    )
+
+    for document_id in matching_docs:
+        document_rank = 0
         for term in query_counter.keys():
-            try:
-                doc_entry = inverted_index["terms"][term]["docs"][doc]
-            except KeyError:
+            term_data = inverted_index.get_term_data(term)
+            document_info = term_data.get_document_info(document_id=document_id)
+            if not document_info:
                 continue
 
             rank = bm25_rank(
-                total_number_of_documents=inverted_index["n_docs"],
-                number_of_documents_containing_term=len(inverted_index["terms"][term]["docs"].keys()),
-                term_frequency_in_document=doc_entry[0],
-                document_length=doc_entry[1],
-                average_document_length=inverted_index["dl_avg"],
+                total_number_of_documents=inverted_index.number_of_documents,
+                number_of_documents_containing_term=term_data.number_of_documents_containing_term,
+                term_frequency_in_document=document_info.term_frequency,
+                document_length=document_info.document_length,
+                average_document_length=inverted_index.average_document_length,
                 **kwargs
-                )
+            )
 
-            for i in range(query_counter[term]):
-                doc_rank.append(rank)
+            # add this score for every occurrence of the term in the doc
+            document_rank += (rank * query_counter[term])
 
-        results[doc] = sum(doc_rank)
+        results[document_id] = document_rank
     return {k: results[k] for k in sorted(results, key=results.get, reverse=True)}

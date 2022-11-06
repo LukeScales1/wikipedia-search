@@ -24,7 +24,7 @@ class DocumentTermInfo(BaseModel):
 
 
 class TermData(BaseModel):
-    document_index: dict[str, DocumentTermInfo] = {}
+    document_index: defaultdict[str, DocumentTermInfo] = defaultdict()
     corpus_term_frequency: int = 0
 
     class Config:

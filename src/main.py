@@ -11,7 +11,7 @@ from schema.scraper import (
     parse_article_html_or_none,
 )
 from schema.search import SearchResponse
-from services.index import create_or_update_inverted_index, rank_inverted_docs
+from services.index import create_or_update_inverted_index, rank_documents
 from services.nlp import lemmatize, set_up_nltk
 from services.parser import get_parsed_text, parse_text_from_html
 from services.scraper import get_random_articles, get_article_content, parse_random_articles
@@ -21,7 +21,7 @@ app = FastAPI()
 s = requests.Session()
 text_processor = lemmatize
 INDEX = Index()
-NUMBER_OF_ARTICLES = 5
+NUMBER_OF_ARTICLES = 200
 
 
 def _index_documents(session: Session, articles: Optional[list[Article]] = None):
@@ -30,15 +30,6 @@ def _index_documents(session: Session, articles: Optional[list[Article]] = None)
     if not articles:
         articles = parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
 
-    INDEX = create_or_update_inverted_index(
-        session=session,
-        articles=articles,
-        text_processor=text_processor,
-        index=INDEX
-    )
-
-    # index more articles to ensure that index can be updated
-    articles = parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
     INDEX = create_or_update_inverted_index(
         session=session,
         articles=articles,
@@ -78,6 +69,6 @@ async def get_results(q: Union[str, None] = Query(default=None)):
     results = None
     if q:
         q = text_processor(q)
-        results = rank_inverted_docs(q, INDEX)
+        results = rank_documents(q, INDEX)
 
     return {"results": results or {}}
