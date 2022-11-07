@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel, Field, validator
 
@@ -65,6 +66,7 @@ Response Schema
 
 class Article(BaseModel):
     title: str
+    tokenized_content: Optional[list[str]]
 
 
 class ArticleIterator:

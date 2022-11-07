@@ -44,9 +44,7 @@ def bm25_rank(
 
 
 def create_or_update_inverted_index(
-        session: Session,
         articles: list[Article],
-        text_processor: Callable[[str], list[str]],
         index: Optional[Index] = None
 ):
     """ Creates or updates existing inverted index model, processes articles and populates index with corpus terms. """
@@ -58,10 +56,7 @@ def create_or_update_inverted_index(
     for article in articles:
         logger.info(f"Processing article: {article.title}")
 
-        doc_text = get_parsed_text(session, article.title)
-        doc_text = text_processor(doc_text)
-
-        index.process_document(document_id=article.title, tokenized_document=doc_text)
+        index.process_document(document_id=article.title, tokenized_document=article.tokenized_content)
 
     logger.info(f"__Number of documents: {index.number_of_documents}")
     logger.info(f"__Corpus size: {index.corpus_size}")
