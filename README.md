@@ -2,7 +2,10 @@
 
 Search a random selection of Wikipedia articles.
 
-Requires Python3.9+. Package requirements can be found in `requirements/local.txt`
+Requires Python3.9+. Package requirements can be found in `requirements/local.txt`. 
+
+Install using:
+```pip install -Ur requirements/local.txt```
 
 
 ### Running the app
