@@ -22,16 +22,6 @@ def get_random_articles(session: Session, params: ArticleTitlesGet) -> dict:
     return r.json()
 
 
-def parse_random_articles(session: Session, params: ArticleTitlesGet) -> list[Article]:
-    articles = get_random_articles(session, params)
-    return [
-        Article(
-            title=entry["title"]
-        )
-        for entry in parse_article_titles(articles)
-    ]
-
-
 def get_article_content(session: Session, params: ContentGet) -> dict:
     r = session.get(url=URL, params=params.dict(by_alias=True))
     r.raise_for_status()
