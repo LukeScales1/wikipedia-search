@@ -32,6 +32,21 @@ NUMBER_OF_ARTICLES = 200
 ARTICLE_CHUNK_SIZE = 10
 
 
+def _fetch_and_process_articles(session: Session):
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+    processes = [
+        pool.apply_async(
+            parse_random_articles,
+            args=(session, ArticleTitlesGet(rnlimit=ARTICLE_CHUNK_SIZE), text_processor,)
+        ) for x in range(ARTICLE_CHUNK_SIZE, NUMBER_OF_ARTICLES+ARTICLE_CHUNK_SIZE, ARTICLE_CHUNK_SIZE)]
+    return [article for p in processes for article in p.get()]
+
+
+def _reset_index():
+    global INDEX
+    INDEX = Index()
+
+
 def _index_documents(session: Session, articles: Optional[list[Article]] = None):
     global INDEX
 
@@ -39,13 +54,7 @@ def _index_documents(session: Session, articles: Optional[list[Article]] = None)
     fetch_time = None
 
     if not articles:
-        pool = multiprocessing.Pool(multiprocessing.cpu_count())
-        processes = [
-            pool.apply_async(
-                parse_random_articles,
-                args=(session, ArticleTitlesGet(rnlimit=ARTICLE_CHUNK_SIZE), text_processor,)
-            ) for x in range(ARTICLE_CHUNK_SIZE, NUMBER_OF_ARTICLES+ARTICLE_CHUNK_SIZE, ARTICLE_CHUNK_SIZE)]
-        articles = [article for p in processes for article in p.get()]
+        articles = _fetch_and_process_articles(session)
         fetch_time = time.time()
 
     index_start_time = time.time()
