@@ -1,13 +1,10 @@
 import logging
 import math
 from collections import Counter
-from typing import Callable, Iterable, Optional
-
-from requests import Session
+from typing import Iterable, Optional
 
 from schema.index import Index
 from schema.scraper import Article
-from services.parser import get_parsed_text
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)

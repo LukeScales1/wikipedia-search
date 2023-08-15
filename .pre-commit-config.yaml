@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: check-merge-conflict
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: detect-private-key
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
+    hooks:
+      - id: isort
+        name: Sort imports using iSort
+        args: [ -p=src, -p=tests, --line-length=120, -e ]
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        name: Check PEP8 compliance
+        description: "Flake8: Your Tool For Style Guide Enforcement"
+        entry: flake8 --max-line-length=120 --count --max-complexity=10 --exclude venv
+        language: python
+        require_serial: true
+        language_version: python3.9
+        types: [ python ]

@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from main import _index_documents, _reset_index, app, s, text_processor
 from schema.scraper import Article
-from services.parser import get_parsed_text
+from services.scraper import get_parsed_text
 
 client = TestClient(app)
 TEST_SEARCH = "Linus_Torvalds"

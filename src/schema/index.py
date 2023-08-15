@@ -103,4 +103,3 @@ class Index(BaseModel):
         )
         for term_data in self.terms.values():
             term_data.reset_cached_properties()
-

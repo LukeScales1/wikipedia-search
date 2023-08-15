@@ -1,8 +1,8 @@
 version: '3'
 services:
-  wiki-search:
+  backend:
     build: .
-    container_name: wiki-search
+    container_name: backend
     command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
     ports:
       - "8000:8000"
