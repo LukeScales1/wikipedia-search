@@ -1,0 +1,13 @@
+version: '3'
+services:
+  wiki-search:
+    build: .
+    container_name: wiki-search
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - "./src:/src"
+      - "./requirements:/requirements"
+volumes:
+    wiki-search:
