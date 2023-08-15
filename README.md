@@ -2,20 +2,25 @@
 
 Search a random selection of Wikipedia articles.
 
+### Running the app
+#### Docker (recommended)
+In the root directory of the project, run:
+```docker-compose up --build```
+
+#### Locally
 Requires Python3.9+. Package requirements can be found in `requirements/local.txt`. 
 
-Install using:
+Activate your virtual environment of choice and then install the dependencies using:
 ```pip install -Ur requirements/local.txt```
 
-
-### Running the app
 Once requirements are installed, navigate to the `src` folder and run:
 
 `uvicorn main:app --reload`
 
-This will launch the application on port 8000 by default. On launch the app will fetch 200 random articles from the 
-Wikipedia API and index them in an inverted index. You can then search for terms and the app will return the relevant 
-article titles as ranked by a [BM25 ranking algorithm](https://en.wikipedia.org/wiki/Okapi_BM25).
+The Docker or the local instructions will launch the application on port 8000 by default. On launch the app will fetch 
+200 random articles from the Wikipedia API and index them in an inverted index. You can then search for terms and the 
+app will return the relevant article titles from those fetched, as ranked by a 
+[BM25 ranking algorithm](https://en.wikipedia.org/wiki/Okapi_BM25).
 
 Full list of endpoints and details can be found at 
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
