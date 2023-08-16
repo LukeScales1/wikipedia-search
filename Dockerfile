@@ -1,6 +1,8 @@
 FROM python:3.9
 
 COPY requirements/ /tmp/requirements/
+COPY alembic.ini /alembic.ini
+COPY alembic/ /alembic/
 COPY src/ /src/
 
 RUN pip install -r /tmp/requirements/base.txt

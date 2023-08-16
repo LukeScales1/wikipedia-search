@@ -9,5 +9,15 @@ services:
     volumes:
       - "./src:/src"
       - "./requirements:/requirements"
+      - "./alembic:/alembic"
+  db:
+    image: "postgres:13.4"
+    container_name: db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "password"
+
 volumes:
-    wiki-search:
+    backend:
