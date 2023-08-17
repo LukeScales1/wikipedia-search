@@ -13,8 +13,12 @@ def set_up_nltk():
 
 
 def basic_preprocess(text: str) -> list[str]:
-    # BASIC PREPROCESS: remove special characters, punctuation, numbers
-    # replace hyphens w/ whitespace - make hyphenated words two individual terms; lowercase
+    """ Basic text preprocessing.
+
+    Removes special characters, punctuation, and numbers.
+    Replaces hyphens with whitespace to make hyphenated words two individual terms, before replacing double whitespaces
+    with single. Lowercases all text. Tokenizes text and returns list of tokens.
+    """
     text = text.replace("-", " ").lower()
     text = text.replace("–", " ")
     # remove odd chars
@@ -30,17 +34,20 @@ def basic_preprocess(text: str) -> list[str]:
 
 
 def stopword_removal(text: str) -> list[str]:
+    """ Removes stopwords from text. """
     stop_words = set(stopwords.words('english'))
     return [word for word in basic_preprocess(text) if word not in stop_words]
 
 
 def stem(text: str) -> list[str]:
+    """ Converts words in text to their stem word using the Porter Stemmer."""
     stemmer = PorterStemmer()
     words = stopword_removal(text)
     return [stemmer.stem(word) for word in words]
 
 
 def lemmatize(text: str) -> list[str]:
+    """ Converts words in text to their lemma using the WordNet lemmatizer."""
     lemmatizer = WordNetLemmatizer()
     words = stopword_removal(text)
     return [lemmatizer.lemmatize(w) for w in words]

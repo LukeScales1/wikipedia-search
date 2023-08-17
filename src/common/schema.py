@@ -37,9 +37,3 @@ class DefaultParams(BaseModel):
 
     class Config:
         use_enum_values = True
-
-
-class ContentGet(DefaultParams):
-    """ Schema for fetching the content of an article. Reused in scraper and parser. """
-    action: Actions = Actions.PARSE
-    page: str

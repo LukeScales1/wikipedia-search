@@ -1,5 +1,4 @@
 import logging
-import multiprocessing
 import time
 from typing import Optional, Union
 
@@ -7,16 +6,14 @@ import requests
 from fastapi import FastAPI, Query
 from requests import Session
 
-from schema.common import ContentGet
-from schema.index import Index
-from schema.parser import ParsedText, ProcessedText
-from schema.scraper import (Article, ArticleTitlesGet, ArticleTitlesGetResponse,
-                            ContentGetResponse, parse_article_html_or_none)
-from schema.search import SearchResponse
-from services.index import create_or_update_inverted_index, rank_documents
-from services.nlp import lemmatize, set_up_nltk
-from services.parser import parse_text_from_html
-from services.scraper import get_and_parse_random_articles, get_article_content, get_article_list, get_parsed_text
+from index.indexer import create_or_update_inverted_index, rank_documents
+from index.nlp import lemmatize, set_up_nltk
+from index.schema import SearchResponse
+from wikipedia.client import (get_article_content, get_article_list, get_parsed_text,
+                              parse_article_html_or_none, parse_text_from_html)
+from wikipedia.parser import parse_article_titles
+from wikipedia.schema import (ArticleSchema, ArticleTitlesGet, ArticleTitlesGetResponse,
+                              ContentGet, ContentGetResponse, ParsedText, ProcessedText)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -26,40 +23,40 @@ set_up_nltk()
 app = FastAPI()
 s = requests.Session()
 text_processor = lemmatize
-INDEX = Index()
-NUMBER_OF_ARTICLES = 200
-ARTICLE_CHUNK_SIZE = 10
+
+NUMBER_OF_ARTICLES = 10
 
 
-def _fetch_and_process_articles(session: Session):
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
-    processes = [
-        pool.apply_async(
-            get_and_parse_random_articles,
-            args=(session, ArticleTitlesGet(rnlimit=ARTICLE_CHUNK_SIZE), text_processor,)
-        ) for _ in range(ARTICLE_CHUNK_SIZE, NUMBER_OF_ARTICLES+ARTICLE_CHUNK_SIZE, ARTICLE_CHUNK_SIZE)]
-    return [article for p in processes for article in p.get()]
+def get_and_parse_random_articles(
+        session: Session,
+        params: ArticleTitlesGet,
+) -> list[ArticleSchema]:
+    """ Helper function for fetching and processing a list of random articles. """
+    articles = get_article_list(session, params)
+    return [
+        ArticleSchema(
+            title=entry["title"],
+            tokenized_content=text_processor(
+                get_parsed_text(session, page_name=entry["title"])
+            ),
+        )
+        for entry in parse_article_titles(articles)
+    ]
 
 
-def _reset_index():
-    global INDEX
-    INDEX = Index()
-
-
-def _index_documents(session: Session, articles: Optional[list[Article]] = None):
-    global INDEX
-
+def _index_documents(session: Session, articles: Optional[list[ArticleSchema]] = None):
+    logger.info("Indexing documents...")
     start_time = time.time()
     fetch_time = None
 
     if not articles:
-        articles = _fetch_and_process_articles(session)
+        articles = get_and_parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
         fetch_time = time.time()
+        logger.info(f"{len(articles)} articles fetched!")
 
     index_start_time = time.time()
-    INDEX = create_or_update_inverted_index(
-        articles=articles,
-        index=INDEX
+    create_or_update_inverted_index(
+        articles=articles
     )
     index_stop_time = time.time()
     if fetch_time:
@@ -104,12 +101,12 @@ async def get_processed_content(page_name: str):
     return text_processor(text)
 
 
-@app.get("/search/", response_model=SearchResponse)
+@app.get("/search", response_model=SearchResponse)
 async def get_results(query: Union[str, None] = Query(default=None)):
     """ Search for articles that the app has already indexed from Wikipedia, based on a query string. """
     results = None
     if query:
         query = text_processor(query)
-        results = rank_documents(query, INDEX)
+        results = rank_documents(query)
 
     return {"results": results or {}}

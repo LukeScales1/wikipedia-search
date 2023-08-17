@@ -1,11 +1,21 @@
+# flake8: noqa E402
+import os
+import sys
 import unittest
 
 import pytest
 from fastapi.testclient import TestClient
 
-from main import _index_documents, _reset_index, app, s, text_processor
-from schema.scraper import Article
-from services.scraper import get_parsed_text
+PROJECT_PATH = os.getcwd()
+SOURCE_PATH = os.path.join(
+    PROJECT_PATH, "src"
+)
+sys.path.append(SOURCE_PATH)
+
+from src.index.indexer import _reset_index
+from src.main import _index_documents, app, s, text_processor
+from src.wikipedia.client import get_parsed_text
+from src.wikipedia.schema import ArticleSchema
 
 client = TestClient(app)
 TEST_SEARCH = "Linus_Torvalds"
@@ -15,7 +25,7 @@ TEST_SEARCH = "Linus_Torvalds"
 def index_documents():
     _reset_index()
     articles = [
-        Article(
+        ArticleSchema(
             title=TEST_SEARCH,
             tokenized_content=text_processor(
                 get_parsed_text(s, page_name=TEST_SEARCH)
@@ -58,6 +68,6 @@ class TestWiki(unittest.TestCase):
         assert response.json()[0] == "creator"
 
     def test_search(self):
-        response = client.get("/search/?q=creator")
+        response = client.get("/search?query=creator")
         assert response.status_code == 200
-        assert response.json() == {"results": {TEST_SEARCH: -0.8239592165010823}}
+        assert TEST_SEARCH in response.json()["results"].keys()

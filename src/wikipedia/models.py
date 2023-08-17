@@ -2,9 +2,8 @@
 DB models for application
 """
 from sqlalchemy import Column, String
-from sqlalchemy.orm import declarative_base
 
-Base = declarative_base()
+from common.models import Base
 
 
 class Article(Base):
