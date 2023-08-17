@@ -5,12 +5,16 @@ from typing import Optional, Union
 import requests
 from fastapi import FastAPI, Query
 from requests import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
+import wikipedia.service as article_service
 from index.indexer import create_or_update_inverted_index, rank_documents
 from index.nlp import lemmatize, set_up_nltk
 from index.schema import SearchResponse
 from wikipedia.client import (get_article_content, get_article_list, get_parsed_text,
                               parse_article_html_or_none, parse_text_from_html)
+from wikipedia.models import Article
 from wikipedia.parser import parse_article_titles
 from wikipedia.schema import (ArticleSchema, ArticleTitlesGet, ArticleTitlesGetResponse,
                               ContentGet, ContentGetResponse, ParsedText, ProcessedText)
@@ -25,6 +29,14 @@ s = requests.Session()
 text_processor = lemmatize
 
 NUMBER_OF_ARTICLES = 10
+
+
+DB_CONNECTION = "postgresql+psycopg2://postgres:password@db:5432"
+
+engine = create_engine(DB_CONNECTION)
+
+DbSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+db_session = DbSession()
 
 
 def get_and_parse_random_articles(
@@ -49,10 +61,22 @@ def _index_documents(session: Session, articles: Optional[list[ArticleSchema]] =
     start_time = time.time()
     fetch_time = None
 
+    articles = articles or article_service.get_all_articles(session=db_session)
+
     if not articles:
+        logger.info("No articles found in database. Fetching some from Wikipedia...")
         articles = get_and_parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
         fetch_time = time.time()
         logger.info(f"{len(articles)} articles fetched!")
+        article_service.add_articles_bulk(
+            session=db_session,
+            articles=[
+                Article.from_dict(article_schema.dict())
+                for article_schema in articles
+            ]
+        )
+    else:
+        logger.info(f"{len(articles)} articles found in database.")
 
     index_start_time = time.time()
     create_or_update_inverted_index(
