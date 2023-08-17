@@ -29,3 +29,11 @@ services:
       interval: 1s
       timeout: 3s
       retries: 30
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    command: npm run start
+    ports:
+      - "3000:3000"
