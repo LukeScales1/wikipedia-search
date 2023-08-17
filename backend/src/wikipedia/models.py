@@ -1,11 +1,10 @@
 """
-DB models for application
+DB models for Wikipedia articles
 """
 from __future__ import annotations
 
-from sqlalchemy import Column, String
-
 from common.models import Base
+from sqlalchemy import Column, String
 
 
 class Article(Base):

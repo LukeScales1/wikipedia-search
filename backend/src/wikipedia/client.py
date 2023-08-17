@@ -9,7 +9,6 @@
 from __future__ import annotations
 
 from requests.sessions import Session
-
 from wikipedia.parser import parse_article_html_or_none, parse_text_from_html
 from wikipedia.schema import ArticleTitlesGet, ContentGet
 

@@ -11,7 +11,7 @@ repos:
     hooks:
       - id: isort
         name: Sort imports using iSort
-        args: [ -p=src, -p=tests, --line-length=120, -e ]
+        args: [ -p=backend/src, -p=tests, --line-length=120, -e ]
   - repo: https://github.com/pycqa/flake8
     rev: 6.0.0
     hooks:

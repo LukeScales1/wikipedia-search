@@ -1,15 +1,18 @@
 version: '3'
 services:
   backend:
-    build: .
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: backend
     command: bash -c "cd ../ && alembic upgrade head && cd src/ && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     volumes:
-      - "./src:/src"
-      - "./requirements:/requirements"
-      - "./alembic:/alembic"
+      - "./backend/src:/src"
+      - "./backend/requirements:/requirements"
+      - "./backend/alembic:/alembic"
+      - "./backend/alembic.ini:/alembic.ini"
     depends_on:
       db:
         condition: service_healthy

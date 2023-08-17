@@ -3,15 +3,14 @@ import time
 from typing import Optional, Union
 
 import requests
-from fastapi import FastAPI, Query
-from requests import Session
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-
 import wikipedia.service as article_service
+from fastapi import FastAPI, Query
 from index.indexer import create_or_update_inverted_index, rank_documents
 from index.nlp import lemmatize, set_up_nltk
 from index.schema import SearchResponse
+from requests import Session
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from wikipedia.client import (get_article_content, get_article_list, get_parsed_text,
                               parse_article_html_or_none, parse_text_from_html)
 from wikipedia.models import Article

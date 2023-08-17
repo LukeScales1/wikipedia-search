@@ -6,7 +6,6 @@ from __future__ import annotations
 from typing import Type
 
 from sqlalchemy.orm import Session
-
 from wikipedia.models import Article
 
 

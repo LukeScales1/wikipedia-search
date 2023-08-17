@@ -3,9 +3,8 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, validator
-
 from common.schema import Actions, DefaultParams
+from pydantic import BaseModel, Field, validator
 from wikipedia.client import parse_article_html_or_none, parse_text_from_html
 from wikipedia.parser import parse_article_titles
 
