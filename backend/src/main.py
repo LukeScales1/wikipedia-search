@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 import time
-from typing import Optional, Union
+from typing import Union
 
 import requests
 import wikipedia.service as article_service
@@ -73,14 +73,14 @@ def get_and_parse_random_articles(
     ]
 
 
-def _index_documents(session: Session, articles: Optional[list[ArticleSchema]] = None):
+def _index_documents(session: Session):
     logger.info("Indexing documents...")
     start_time = time.time()
     fetch_time = None
 
-    articles = articles or article_service.filter_articles(session=db_session)
+    db_articles = article_service.filter_articles(session=db_session)
 
-    if not articles:
+    if not db_articles:
         logger.info("No articles found in database. Fetching some from Wikipedia...")
         articles = get_and_parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
         fetch_time = time.time()
@@ -93,6 +93,10 @@ def _index_documents(session: Session, articles: Optional[list[ArticleSchema]] =
             ]
         )
     else:
+        articles = [
+            ArticleSchema.from_orm(article)
+            for article in db_articles
+        ]
         logger.info(f"{len(articles)} articles found in database.")
 
     index_start_time = time.time()
