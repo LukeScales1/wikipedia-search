@@ -66,6 +66,12 @@ This will start the React app on port 3000 by default.
 
 ## Using the app
 
+The frontend React app will show a list of the random articles that have been fetched from Wikipedia.
+For now, you can't search for relevant text to the articles that are displayed on the frontend (since I have not yet
+added a search term input field), but the logic has been implemented to facilitate this which highlights relevant
+articles. You can click then click on a highlighted article to view it in full on Wikipedia. Search input to be added in
+an upcoming commit.
+
 Full list of endpoints and details can be found at
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 

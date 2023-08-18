@@ -1,13 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit'
 
-import articleReducer from '../features/articles/articleSlice'
+import { apiSlice } from "./apiSlice";
 
 const reducer = {
-  article: articleReducer,
+  [apiSlice.reducerPath]: apiSlice.reducer
 }
 
 export const store = configureStore({
   reducer,
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(apiSlice.middleware)
 })
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
