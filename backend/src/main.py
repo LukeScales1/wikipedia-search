@@ -1,29 +1,47 @@
+from __future__ import annotations
+
 import logging
 import time
 from typing import Optional, Union
 
 import requests
 import wikipedia.service as article_service
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from index.indexer import create_or_update_inverted_index, rank_documents
 from index.nlp import lemmatize, set_up_nltk
 from index.schema import SearchResponse
 from requests import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from wikipedia.client import (get_article_content, get_article_list, get_parsed_text,
+from wikipedia.client import (fetch_article_content, fetch_article_list, fetch_parsed_text,
                               parse_article_html_or_none, parse_text_from_html)
 from wikipedia.models import Article
 from wikipedia.parser import parse_article_titles
-from wikipedia.schema import (ArticleSchema, ArticleTitlesGet, ArticleTitlesGetResponse,
+from wikipedia.schema import (ArticleSchema, ArticlesResponse, ArticleTitlesGet,
                               ContentGet, ContentGetResponse, ParsedText, ProcessedText)
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.basicConfig()
 
-set_up_nltk()
 app = FastAPI()
+
+origins = [
+    "http://localhost",
+    "http://localhost:3000",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+set_up_nltk()
+
 s = requests.Session()
 text_processor = lemmatize
 
@@ -43,12 +61,12 @@ def get_and_parse_random_articles(
         params: ArticleTitlesGet,
 ) -> list[ArticleSchema]:
     """ Helper function for fetching and processing a list of random articles. """
-    articles = get_article_list(session, params)
+    articles = fetch_article_list(session, params)
     return [
         ArticleSchema(
             title=entry["title"],
             tokenized_content=text_processor(
-                get_parsed_text(session, page_name=entry["title"])
+                fetch_parsed_text(session, page_name=entry["title"])
             ),
         )
         for entry in parse_article_titles(articles)
@@ -60,7 +78,7 @@ def _index_documents(session: Session, articles: Optional[list[ArticleSchema]] =
     start_time = time.time()
     fetch_time = None
 
-    articles = articles or article_service.get_all_articles(session=db_session)
+    articles = articles or article_service.filter_articles(session=db_session)
 
     if not articles:
         logger.info("No articles found in database. Fetching some from Wikipedia...")
@@ -97,22 +115,49 @@ async def index():
     return {"message": "Welcome!! Please check out the docs at localhost:8000/docs!"}
 
 
-@app.get("/articles", response_model=ArticleTitlesGetResponse)
-async def get_articles():
-    """ Get some fresh, random articles from Wikipedia. """
-    return get_article_list(s, ArticleTitlesGet())
+@app.get("/articles", response_model=ArticlesResponse)
+async def get_articles(limit: int = Query(default=0, gt=0, le=100), offset: int = Query(default=0, ge=0)):
+    """ Get articles from the DB, with optional limit and offset.
+
+    Defaults to all articles in the DB if no limit provided. Offset can be used without a limit.
+
+    :param limit: The maximum number of articles to return.
+    :param offset: The number of articles to skip.
+    :raises HTTPException: (404) If no articles are found.
+    """
+    articles = article_service.filter_articles(session=db_session, limit=limit, offset=offset)
+    if not articles:
+        raise HTTPException(status_code=404, detail="No articles found!")
+    return articles
+
+
+@app.post("/articles", response_model=ArticlesResponse)
+async def fetch_new_articles():
+    """ Get some random articles from Wikipedia, add to the DB, and reindex. """
+    new_articles = get_and_parse_random_articles(s, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
+    article_service.add_articles_bulk(
+        session=db_session,
+        articles=[
+            Article.from_dict(article_schema.dict())
+            for article_schema in new_articles
+        ]
+    )
+    create_or_update_inverted_index(
+        articles=new_articles
+    )
+    return new_articles
 
 
 @app.get("/content/{page_name}", response_model=ContentGetResponse)
 async def get_content(page_name: str):
     """ Get the raw HTML content of a Wikipedia article. """
-    return get_article_content(s, ContentGet(page=page_name))
+    return fetch_article_content(s, ContentGet(page=page_name))
 
 
 @app.get("/parse/{page_name}", response_model=ParsedText)
 async def get_parsed_content(page_name: str):
     """ Get the parsed text of a Wikipedia article. """
-    content = get_article_content(s, ContentGet(page=page_name))
+    content = fetch_article_content(s, ContentGet(page=page_name))
     html = parse_article_html_or_none(content["data"])
     return {"text": parse_text_from_html(html)}
 
@@ -120,7 +165,7 @@ async def get_parsed_content(page_name: str):
 @app.get("/process/{page_name}", response_model=ProcessedText)
 async def get_processed_content(page_name: str):
     """ Get the processed text of a Wikipedia article. """
-    text = get_parsed_text(s, page_name)
+    text = fetch_parsed_text(s, page_name)
     return text_processor(text)
 
 

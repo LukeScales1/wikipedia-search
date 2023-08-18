@@ -2,6 +2,11 @@
 
 Search a random selection of Wikipedia articles.
 
+On launch the app will fetch a number of random articles from the
+Wikipedia API, store them in the Postgres DB instance, and then index them in an inverted index.
+You can then search for terms and the app will return the relevant article titles from those fetched, as ranked by a
+[BM25 ranking algorithm](https://en.wikipedia.org/wiki/Okapi_BM25).
+
 ## Development
 ### Install pre-commit hooks
 This project uses [pre-commit](https://pre-commit.com/) to run automated checks on code before it is committed. To
@@ -27,16 +32,14 @@ Once requirements are installed, navigate to the `src` folder and run:
 
 `uvicorn main:app --reload`
 
-The Docker or the local instructions will launch the application on port 8000 by default. On launch the app will fetch
-200 random articles from the Wikipedia API and index them in an inverted index. You can then search for terms and the
-app will return the relevant article titles from those fetched, as ranked by a
-[BM25 ranking algorithm](https://en.wikipedia.org/wiki/Okapi_BM25).
+The Docker or the local instructions will launch the application on port 8000 by default.
 
 Full list of endpoints and details can be found at
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 
-Example search (you may need to change the query to see some results):
-[http://127.0.0.1:8000/search/?q=act](http://127.0.0.1:8000/search/?q=act)
+Example search (you may need to change the query to see some results, since you will receive a different set of random
+articles):
+[http://127.0.0.1:8000/search/?q=act](http://127.0.0.1:8000/search?query=act)
 
 Example result:
 ```json
@@ -60,4 +63,4 @@ Example result:
 
 ## Running tests
 
-To run the automated tests, navigate to the `src` directory and simply execute `pytest`
+To run the automated tests locally, navigate to the `backend` directory and simply execute `pytest`

@@ -6,7 +6,6 @@ from typing import Optional
 from common.schema import Actions, DefaultParams
 from pydantic import BaseModel, Field, validator
 from wikipedia.client import parse_article_html_or_none, parse_text_from_html
-from wikipedia.parser import parse_article_titles
 
 
 class ListTypes(Enum):
@@ -21,23 +20,21 @@ class ArticleSchema(BaseModel):
     title: str
     tokenized_content: Optional[list[str]]
 
+    @validator('tokenized_content', pre=True)
+    def validate_tokenized_content(cls, value: str | list[str] | None):
+        """
+        Validate the tokenized content of an article. If the value is a string, it is assumed to be a comma-separated
+        """
+        if not value:
+            return None
 
-class ArticleIterator:
-    """
-    Iterator for ArticleSchema. Allows for iteration over a list of articles, returning the title of each article.
-    """
-    def __init__(self, articles: list[ArticleSchema]):
-        self.articles = articles
-        self.current_index = 0
+        if type(value) is str:
+            return value.replace("{", "").replace("}", "").split(",")
 
-    def __next__(self) -> str:
-        if self.current_index >= len(self.articles):
-            raise StopIteration
+        return value
 
-        current_item = self.articles[self.current_index]
-        self.current_index += 1
-
-        return current_item.title
+    class Config:
+        orm_mode = True
 
 
 class ParsedText(BaseModel):
@@ -77,20 +74,8 @@ Response Schema
 """
 
 
-class ArticleTitlesGetResponse(BaseModel):
+class ArticlesResponse(BaseModel):
     __root__: list[ArticleSchema]
-
-    @validator('__root__', pre=True)
-    def validate_data(cls, value: dict):
-        data = parse_article_titles(value)
-
-        if not data:
-            raise ValueError("No results returned from fetch titles request!")
-
-        return data
-
-    def __iter__(self):
-        return ArticleIterator(self.__root__)
 
 
 class ContentGetResponse(BaseModel):

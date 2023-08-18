@@ -21,6 +21,8 @@ def basic_preprocess(text: str) -> list[str]:
     """
     text = text.replace("-", " ").lower()
     text = text.replace("–", " ")
+    text = text.replace("—", " ")
+    text = text.replace("_", " ")
     # remove odd chars
     text = text.replace('\"', " ")
     text = text.replace('[', " ")

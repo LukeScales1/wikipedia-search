@@ -3,20 +3,28 @@ DB service for CRUD operations on Wikipedia Article model.
 """
 from __future__ import annotations
 
-from typing import Type
+from typing import Sequence
 
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 from wikipedia.models import Article
 
 
 def get_article(session: Session, page_name: str) -> Article | None:
     """ Get an article by title. """
-    return session.query(Article).filter(Article.title == page_name).first()
+    query = select(Article).where(Article.c.title == page_name)
+    return session.execute(query).first()
 
 
-def get_all_articles(session: Session) -> list[Type[Article]]:
+def filter_articles(session: Session, limit: int | None = None, offset: int | None = None) -> Sequence[Article]:
     """ Get all articles from the database. """
-    return session.query(Article).all()
+    query = select(Article)
+    if limit:
+        query = query.limit(limit)
+    if offset:
+        query = query.offset(offset)
+
+    return session.scalars(query).all()
 
 
 def add_article(session: Session, article: Article):

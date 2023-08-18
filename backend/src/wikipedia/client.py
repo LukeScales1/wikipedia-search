@@ -15,7 +15,7 @@ from wikipedia.schema import ArticleTitlesGet, ContentGet
 URL = "https://en.wikipedia.org/w/api.php"
 
 
-def get_article_list(session: Session, params: ArticleTitlesGet) -> dict:
+def fetch_article_list(session: Session, params: ArticleTitlesGet) -> dict:
     """ Get a list of articles from Wikipedia.
 
     Check the API docs for more info. https://www.mediawiki.org/wiki/API:Lists/All
@@ -26,7 +26,7 @@ def get_article_list(session: Session, params: ArticleTitlesGet) -> dict:
     return r.json()
 
 
-def get_article_content(session: Session, params: ContentGet) -> dict:
+def fetch_article_content(session: Session, params: ContentGet) -> dict:
     """ Get the content of an article from Wikipedia. """
     r = session.get(url=URL, params=params.dict(by_alias=True))
     r.raise_for_status()
@@ -34,8 +34,8 @@ def get_article_content(session: Session, params: ContentGet) -> dict:
     return {"data": r.json()}
 
 
-def get_parsed_text(session: Session, page_name: str):
+def fetch_parsed_text(session: Session, page_name: str):
     """ Helper function for fetching an article's content and then parsing the main text. """
-    content = get_article_content(session, ContentGet(page=page_name))
+    content = fetch_article_content(session, ContentGet(page=page_name))
     html = parse_article_html_or_none(content["data"])
     return parse_text_from_html(html)
