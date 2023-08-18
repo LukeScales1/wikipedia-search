@@ -7,6 +7,8 @@ from dataclasses import dataclass
 from functools import cached_property
 from typing import Iterable, Optional
 
+from index.schema import SearchResult
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.basicConfig()
@@ -208,7 +210,7 @@ def get_set_of_documents_containing_terms(index: Index, terms: Iterable[str]) ->
     return matching_docs
 
 
-def rank_documents(query_terms: list[str], inverted_index: Index | None = INDEX, **kwargs):
+def rank_documents(query_terms: list[str], inverted_index: Index | None = INDEX, **kwargs) -> list[SearchResult]:
     """ Creates a dict of document IDs and ranks for the provided query terms, ordered by rank. """
     results = {}
     query_counter = Counter(query_terms)
@@ -239,4 +241,8 @@ def rank_documents(query_terms: list[str], inverted_index: Index | None = INDEX,
             document_rank += (rank * query_counter[term])
 
         results[document_id] = document_rank
-    return {k: results[k] for k in sorted(results, key=results.get, reverse=True)}
+
+    return [
+        SearchResult(title=k, ranking=results[k])
+        for k in sorted(results, key=results.get, reverse=True)
+    ]

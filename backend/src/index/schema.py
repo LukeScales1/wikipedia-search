@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 
-"""
-Response Schema
-"""
+
+class SearchResult(BaseModel):
+    title: str
+    ranking: float
 
 
 class SearchResponse(BaseModel):
-    results: dict
+    __root__: list[SearchResult]

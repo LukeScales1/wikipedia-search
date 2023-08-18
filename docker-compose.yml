@@ -24,6 +24,7 @@ services:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: "password"
+      POSTGRES_DB: "wiki-search"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 1s

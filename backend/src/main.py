@@ -48,7 +48,7 @@ text_processor = lemmatize
 NUMBER_OF_ARTICLES = 10
 
 
-DB_CONNECTION = "postgresql+psycopg2://postgres:password@db:5432"
+DB_CONNECTION = "postgresql+psycopg2://postgres:password@db:5432/wiki-search"
 
 engine = create_engine(DB_CONNECTION)
 
@@ -176,9 +176,9 @@ async def get_processed_content(page_name: str):
 @app.get("/search", response_model=SearchResponse)
 async def get_results(query: Union[str, None] = Query(default=None)):
     """ Search for articles that the app has already indexed from Wikipedia, based on a query string. """
-    results = None
+    results = []
     if query:
         query = text_processor(query)
         results = rank_documents(query)
 
-    return {"results": results or {}}
+    return results
