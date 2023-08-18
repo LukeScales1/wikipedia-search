@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.11
 
 COPY requirements/ /tmp/requirements/
 COPY alembic.ini /alembic.ini
