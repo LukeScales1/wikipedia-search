@@ -1,7 +1,5 @@
 import React from 'react'
 import {Article, SearchResult } from "../../types";
-
-import { useGetArticlesQuery, useGetSearchResultsQuery } from "../../redux/apiSlice";
 import { Spinner } from "@chakra-ui/react";
 
 
@@ -11,20 +9,21 @@ const formatWikipediaUrl = (title: string) => {
 };
 
 type Props = {
-  searchTerms: string;
+  articles: Article[];
+  searchResults: SearchResult[];
+  isLoading: boolean;
+  isError: boolean;
 }
 
 
-export const Articles: React.FC<Props> = ({searchTerms}) => {
-  const { data: articles = [], error, isLoading} = useGetArticlesQuery('');
-  const { data: searchResults = [] } = useGetSearchResultsQuery(searchTerms);
+export const Articles: React.FC<Props> = ({articles, searchResults, isLoading, isError}) => {
 
   const matchingArticleTitles = searchResults.map((searchResult: SearchResult) => searchResult.title);
   const isArticleInResults = (article: Article) => matchingArticleTitles.includes(article.title);
 
   return (
     <div>
-      { error ?
+      { isError ?
         (
           <>
             <div>Oh no, there was an error loading your articles!</div>

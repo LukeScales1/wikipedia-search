@@ -1,23 +1,20 @@
 import React from 'react'
 import {IconButton, Input, InputGroup, InputLeftElement} from '@chakra-ui/react'
 import { SearchIcon } from "@chakra-ui/icons";
-import { useGetArticlesQuery } from "../../redux/apiSlice";
 
 type Props = {
   updateSearchTerms: (searchTerms: string) => void;
+  isSearchingDisabled?: boolean;
 };
 
 
 export const Search: React.FC<Props> = ({
   updateSearchTerms,
+  isSearchingDisabled,
 }) => {
-  const { error, isLoading } = useGetArticlesQuery('');
-
   const [searchTerms, setSearchTerms] = React.useState<string>("");
   const handleSearchTermsChange = (event: React.ChangeEvent<HTMLInputElement>) => setSearchTerms(event.target.value);
   const handleClickSearch = () => { updateSearchTerms(searchTerms) };
-
-  const isSearchingDisabled = error ? true : isLoading;
 
   return (
     <InputGroup width={"60%"} marginBottom={"8px"}>
