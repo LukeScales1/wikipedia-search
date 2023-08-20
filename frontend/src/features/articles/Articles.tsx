@@ -9,9 +9,14 @@ const formatWikipediaUrl = (title: string) => {
   return `https://en.wikipedia.org/wiki/${formattedTitle}`;
 };
 
-export const Articles = () => {
+type Props = {
+  searchTerms: string;
+}
+
+
+export const Articles: React.FC<Props> = ({searchTerms}) => {
   const { data: articles = [] } = useGetArticlesQuery('');
-  const { data: searchResults = [] } = useGetSearchResultsQuery('');
+  const { data: searchResults = [] } = useGetSearchResultsQuery(searchTerms);
 
   const matchingArticleTitles = searchResults.map((searchResult: SearchResult) => searchResult.title);
   const isArticleInResults = (article: Article) => matchingArticleTitles.includes(article.title);
