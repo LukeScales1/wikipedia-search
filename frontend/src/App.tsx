@@ -8,7 +8,6 @@ import { useGetArticlesQuery, useGetSearchResultsQuery } from "./redux/apiSlice"
 
 function App() {
   const [searchTerms, setSearchTerms] = React.useState<string>("");
-  const searchTermUpdate = (searchTerms: string) => setSearchTerms(searchTerms);
 
   const {
     data: articles = [],
@@ -28,7 +27,7 @@ function App() {
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
         <Search
-          updateSearchTerms={searchTermUpdate}
+          updateSearchTerms={setSearchTerms}
           isSearchingDisabled={isSearchingDisabled}
         />
         <Articles

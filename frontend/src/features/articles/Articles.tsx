@@ -3,11 +3,6 @@ import {Article, SearchResult } from "../../types";
 import { Spinner } from "@chakra-ui/react";
 
 
-const formatWikipediaUrl = (title: string) => {
-  const formattedTitle = title.replace(/ /g, "_");
-  return `https://en.wikipedia.org/wiki/${formattedTitle}`;
-};
-
 type Props = {
   articles: Article[];
   searchResults: SearchResult[];
@@ -15,6 +10,18 @@ type Props = {
   isError: boolean;
 }
 
+const formatWikipediaUrl = (title: string) => {
+  const formattedTitle = title.replace(/ /g, "_");
+  return `https://en.wikipedia.org/wiki/${formattedTitle}`;
+};
+
+const openWikipediaArticle = (title: string) => {
+  window.open(formatWikipediaUrl(title), "_blank", "noreferrer");
+};
+
+const getArticleStyle = (isArticleSelected: boolean) => {
+  return isArticleSelected ? { cursor: "pointer" } : { opacity: "25%" };
+}
 
 export const Articles: React.FC<Props> = ({articles, searchResults, isLoading, isError}) => {
 
@@ -40,10 +47,8 @@ export const Articles: React.FC<Props> = ({articles, searchResults, isLoading, i
               articles?.map((article: Article) => {
                 const includeArticle = isArticleInResults(article);
                 return (
-                  <div key={article.title} style={includeArticle ? {cursor: "pointer"} : {opacity: "25%"}}>
-                    <h3 onClick={() => includeArticle &&
-                      window.open(formatWikipediaUrl(article.title), "_blank", "noreferrer")}
-                    >
+                  <div key={article.title} style={getArticleStyle(includeArticle)}>
+                    <h3 onClick={() => includeArticle && openWikipediaArticle(article.title)}>
                       { article.title }
                     </h3>
                   </div>
