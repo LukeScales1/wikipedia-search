@@ -35,6 +35,7 @@ export const Search: React.FC<Props> = ({
         value={searchTerms}
         onChange={handleSearchTermsChange}
         isDisabled={isSearchingDisabled}
+        onKeyDown={(event) => {if (event.key === 'Enter') {handleClickSearch()} }}
       />
     </InputGroup>
   )
