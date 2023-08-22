@@ -140,7 +140,7 @@ async def fetch_new_articles():
     article_service.add_articles_bulk(
         session=db_session,
         articles=[
-            Article.from_dict(article_schema.dict())
+            article_schema.to_db_model()
             for article_schema in new_articles
         ]
     )
