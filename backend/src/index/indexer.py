@@ -10,8 +10,6 @@ from typing import Iterable, Optional
 from index.schema import SearchResult
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logging.basicConfig()
 
 
 def _reset_cached_properties(object_instance, properties: Iterable[str]):
