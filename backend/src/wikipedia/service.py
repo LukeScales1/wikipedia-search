@@ -3,11 +3,18 @@ DB service for CRUD operations on Wikipedia Article model.
 """
 from __future__ import annotations
 
+import logging
 from typing import Sequence
 
+import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+
+from wikipedia.client import get_and_parse_random_articles
 from wikipedia.models import Article
+from wikipedia.schema import ArticleSchema, ArticleTitlesGet
+
+logger = logging.getLogger(__name__)
 
 
 def get_article(session: Session, page_name: str) -> Article | None:
@@ -49,3 +56,36 @@ def delete_article(session: Session, article: Article):
     """ Delete an article from the database. """
     session.delete(article)
     session.commit()
+
+
+def fetch_and_add_articles(db_session: Session, params: ArticleTitlesGet) -> list[ArticleSchema]:
+    """
+    Fetches articles from Wikipedia and adds them to the database.
+
+    :param db_session:
+    :param params:
+    """
+    with requests.Session() as session:
+        articles = get_and_parse_random_articles(session, params)
+    logger.info(f"{len(articles)} articles fetched!")
+    add_articles_bulk(
+        session=db_session,
+        articles=[
+            Article.from_dict(article_schema.dict())
+            for article_schema in articles
+        ]
+    )
+    return articles
+
+
+def get_articles_as_schema(db_session: Session, **filter_kwargs) -> list[ArticleSchema]:
+    """ Get articles from the database as ArticleSchema objects.
+
+    :param db_session: The database session.
+    :param filter_kwargs: Keyword arguments to filter the articles by.
+    """
+    db_articles = filter_articles(session=db_session, **filter_kwargs)
+    return [
+        ArticleSchema.from_orm(article)
+        for article in db_articles
+    ]

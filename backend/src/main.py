@@ -5,34 +5,20 @@ import time
 from contextlib import asynccontextmanager
 from typing import Annotated, Optional, Union
 
-import requests
-import wikipedia.service as article_service
 from fastapi import Depends, FastAPI, Query
 from fastapi.middleware.cors import CORSMiddleware
-from index.indexer import create_or_update_inverted_index, rank_documents
-from index.nlp import lemmatize, set_up_nltk
-from index.schema import SearchResult
-from requests import Session
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session as DBSession
 from sqlalchemy.orm import sessionmaker
-from wikipedia.client import fetch_article_list, fetch_parsed_text
-from wikipedia.models import Article
-from wikipedia.parser import parse_article_titles
+
+import wikipedia.service as article_service
+from index.indexer import create_or_update_inverted_index, rank_documents
+from index.schema import SearchResult
+from settings import DB_CONNECTION, NUMBER_OF_ARTICLES, text_processor
 from wikipedia.schema import ArticleSchema, ArticleTitlesGet
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logging.basicConfig()
 
-set_up_nltk()
-
-text_processor = lemmatize
-
-NUMBER_OF_ARTICLES = 10
-
-
-DB_CONNECTION = "postgresql+psycopg2://postgres:password@db:5432/wiki-search"
 engine = create_engine(DB_CONNECTION)
 db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -52,64 +38,33 @@ async def get_db_session():
 DbSessionDeps = Annotated[Optional[DBSession], Depends(get_db_session)]
 
 
-def get_and_parse_random_articles(
-        session: Session,
-        params: ArticleTitlesGet,
-) -> list[ArticleSchema]:
-    """ Helper function for fetching and processing a list of random articles. """
-    articles = fetch_article_list(session, params)
-    return [
-        ArticleSchema(
-            title=entry["title"],
-            tokenized_content=text_processor(
-                fetch_parsed_text(session, page_name=entry["title"])
-            ),
-        )
-        for entry in parse_article_titles(articles)
-    ]
-
-
 def _index_documents(db_session: DBSession):
     """ Helper function for indexing documents. """
     logger.info("Indexing documents...")
-    start_time = time.time()
-    fetch_time = None
 
-    db_articles = article_service.filter_articles(session=db_session)
-
-    if not db_articles:
-        logger.info("No articles found in database. Fetching some from Wikipedia...")
-        with requests.Session() as session:
-            articles = get_and_parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
-        fetch_time = time.time()
-        logger.info(f"{len(articles)} articles fetched!")
-        article_service.add_articles_bulk(
-            session=db_session,
-            articles=[
-                Article.from_dict(article_schema.dict())
-                for article_schema in articles
-            ]
+    articles = article_service.get_articles_as_schema(db_session=db_session)
+    if not articles:
+        logger.info("No articles in DB. Fetching new articles...")
+        articles = article_service.fetch_and_add_articles(
+            db_session=db_session,
+            params=ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES)
         )
-    else:
-        articles = [
-            ArticleSchema.from_orm(article)
-            for article in db_articles
-        ]
-        logger.info(f"{len(articles)} articles found in database.")
 
     index_start_time = time.time()
     create_or_update_inverted_index(
         articles=articles
     )
     index_stop_time = time.time()
-    if fetch_time:
-        logger.info(f"Time taken to fetch and tokenize articles: {fetch_time - start_time}")
 
     logger.info(f"Time taken to index articles: {index_stop_time - index_start_time}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    """
+    Runs this function when the app starts up.
+    :param app:
+    """
     db_session = db_session_maker()
     _index_documents(db_session)
     db_session.close()
@@ -147,7 +102,7 @@ async def get_articles(
 
     Defaults to all articles in the DB if no limit provided. Offset can be used without a limit.
 
-    :param db_session: The database session.
+    :param db_session: The database session dependency.
     :param limit: The maximum number of articles to return.
     :param offset: The number of articles to skip.
     """
@@ -156,15 +111,14 @@ async def get_articles(
 
 @app.post("/articles", response_model=list[ArticleSchema])
 async def fetch_new_articles(db_session: Annotated[DBSession, Depends(get_db_session)]):
-    """ Get some random articles from Wikipedia, add to the DB, and reindex. """
-    with requests.Session() as session:
-        new_articles = get_and_parse_random_articles(session, ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES))
-    article_service.add_articles_bulk(
-        session=db_session,
-        articles=[
-            article_schema.to_db_model()
-            for article_schema in new_articles
-        ]
+    """ Get some random articles from Wikipedia, add to the DB, and reindex.
+
+    Returns the new articles.
+
+    :param db_session: The database session dependency.
+    """
+    new_articles = article_service.fetch_and_add_articles(
+        db_session=db_session, params=ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES)
     )
     create_or_update_inverted_index(
         articles=new_articles
@@ -174,7 +128,10 @@ async def fetch_new_articles(db_session: Annotated[DBSession, Depends(get_db_ses
 
 @app.get("/search", response_model=list[SearchResult])
 async def get_results(query: Union[str, None] = Query(default=None)):
-    """ Search for articles that the app has already indexed from Wikipedia, based on a query string. """
+    """ Search for articles that the app has already indexed from Wikipedia, based on a query string.
+
+    :param query: The query string to search for.
+    """
     results = []
     if query:
         query = text_processor(query)
