@@ -26,6 +26,9 @@ Base.metadata.create_all(bind=engine)
 
 
 def override_get_db():
+    """
+    Override the `get_db_session` FastAPI app dependency to use a test database session.
+    """
     db = None
     try:
         db = TestingSessionLocal()
@@ -51,7 +54,7 @@ TEST_ARTICLE = ArticleSchema(
 
 @pytest.fixture
 def article():
-    """ Returns a test article. """
+    """ Returns a test article DB model. """
     return TEST_ARTICLE.to_db_model()
 
 
@@ -59,7 +62,7 @@ def article():
 def add_article(article):
     """
     Add a test article to the database and manages removal after test.
-    :param article:
+    :param article: test article fixture
     """
     db_session = TestingSessionLocal()
     db_session.add(article)
@@ -90,7 +93,12 @@ def test_get_articles_returns_empty_array_if_no_records():
 
 
 def test_get_articles(add_article):
-    """ Test that the get_articles endpoint returns the correct number of records. """
+    """ Test that the get_articles endpoint returns the correct number of records.
+
+    In this case, we have only one article added from fixtures.
+
+    :param add_article: fixture to add an article to the database.
+    """
     response = client.get("/articles")
     assert response.status_code == 200
     assert len(response.json()) == 1
@@ -98,7 +106,12 @@ def test_get_articles(add_article):
 
 
 def test_get_article_parses_tokenized_content_correctly(add_article):
-    """ Test that article content is correctly parsed between the database and the API. """
+    """ Test that article content is correctly parsed between the database and the API.
+
+    In this case, we have only one article added from fixtures.
+
+    :param add_article: fixture to add an article to the database.
+    """
     response = client.get("/articles")
     assert response.status_code == 200
     assert response.json()[0]["tokenized_content"] == TEST_ARTICLE.tokenized_content
@@ -108,6 +121,9 @@ def test_get_search_results(add_article, index_documents):
     """ Test that the search endpoint returns the correct results.
 
     In this case, we have only one article added from fixtures.
+
+    :param add_article: fixture to add an article to the database.
+    :param index_documents: fixture to index documents in the database.
     """
     response = client.get("/search?query=creator")
     assert response.status_code == 200
@@ -116,7 +132,12 @@ def test_get_search_results(add_article, index_documents):
 
 
 def test_get_search_results_empty_response(add_article, index_documents):
-    """ Test that the search endpoint returns an empty response if no valid articles are found. """
+    """ Test that the search endpoint returns an empty response if no valid articles are found.
+
+    In this case, we have only one article added from fixtures, but the query is irrelevant to the article.
+
+    :param add_article: fixture to add an article to the database.
+    """
     response = client.get("/search?query=football")
     assert response.status_code == 200
     assert len(response.json()) == 0
