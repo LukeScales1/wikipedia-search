@@ -18,13 +18,22 @@ logger = logging.getLogger(__name__)
 
 
 def get_article(session: Session, page_name: str) -> Article | None:
-    """ Get an article by title. """
+    """ Get an article by title.
+
+    :param session: The database session.
+    :param page_name: The title of the article.
+    """
     query = select(Article).where(Article.c.title == page_name)
     return session.execute(query).first()
 
 
 def filter_articles(session: Session, limit: int | None = None, offset: int | None = None) -> Sequence[Article]:
-    """ Get all articles from the database. """
+    """ Get all articles from the database.
+
+    :param session: The database session.
+    :param limit: The (optional) maximum number of articles to return.
+    :param offset: The (optional) number of articles to skip.
+    """
     query = select(Article)
     if limit:
         query = query.limit(limit)
@@ -35,25 +44,41 @@ def filter_articles(session: Session, limit: int | None = None, offset: int | No
 
 
 def add_article(session: Session, article: Article):
-    """ Add an article to the database. """
+    """ Add an article to the database.
+
+    :param session: The database session.
+    :param article: The article to add.
+    """
     session.add(article)
     session.commit()
 
 
 def add_articles_bulk(session: Session, articles: list[Article]):
-    """ Add a list of articles to the database. """
+    """ Add a list of articles to the database.
+
+    :param session: The database session.
+    :param articles: The articles to add.
+    """
     session.bulk_save_objects(articles)
     session.commit()
 
 
 def update_article(session: Session, article: Article):
-    """ Update an article in the database. """
+    """ Update an article in the database.
+
+    :param session: The database session.
+    :param article: The article to update.
+    """
     session.merge(article)
     session.commit()
 
 
 def delete_article(session: Session, article: Article):
-    """ Delete an article from the database. """
+    """ Delete an article from the database.
+
+    :param session: The database session.
+    :param article: The article to delete.
+    """
     session.delete(article)
     session.commit()
 
