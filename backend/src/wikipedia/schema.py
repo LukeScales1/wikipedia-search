@@ -5,7 +5,7 @@ from typing import Optional
 
 from common.schema import Actions, DefaultParams
 from pydantic import BaseModel, Field, validator
-from wikipedia.client import parse_article_html_or_none, parse_text_from_html
+from wikipedia.models import Article
 
 
 class ListTypes(Enum):
@@ -14,6 +14,15 @@ class ListTypes(Enum):
     enum to facilitate any further work. See https://www.mediawiki.org/wiki/API:Lists/All for more.
     """
     RANDOM = "random"
+
+
+def reformat_tokenized_content(content: str) -> list[str]:
+    """ Reformats the string representation of tokenized content into a list of strings.
+
+    Removes any whitespace, braces and quotes, and splits on commas.
+    """
+    import re
+    return re.split(r"[,\s]+", re.sub(r"[\[\]{}']", "", content))
 
 
 class ArticleSchema(BaseModel):
@@ -29,26 +38,19 @@ class ArticleSchema(BaseModel):
             return None
 
         if type(value) is str:
-            return value.replace("{", "").replace("}", "").split(",")
+            return reformat_tokenized_content(value)
 
         return value
 
     class Config:
         orm_mode = True
 
-
-class ParsedText(BaseModel):
-    text: str
-
-    @classmethod
-    def from_html(cls, html: str) -> ParsedText:
-        return cls(
-            text=parse_text_from_html(html)
+    def to_db_model(self) -> Article:
+        """ Convert an ArticleSchema to a DB model. """
+        return Article(
+            title=self.title,
+            tokenized_content=",".join(self.tokenized_content),
         )
-
-
-class ProcessedText(BaseModel):
-    __root__: list[str]
 
 
 """
@@ -67,25 +69,3 @@ class ContentGet(DefaultParams):
     """ Schema for fetching the content of an article. """
     action: Actions = Actions.PARSE
     page: str
-
-
-"""
-Response Schema
-"""
-
-
-class ArticlesResponse(BaseModel):
-    __root__: list[ArticleSchema]
-
-
-class ContentGetResponse(BaseModel):
-    data: str
-
-    @validator('data', pre=True)
-    def validate_text(cls, value: dict):
-        data = parse_article_html_or_none(value)
-
-        if not data:
-            raise ValueError("No results returned from scrape request!")
-
-        return data
