@@ -1,3 +1,4 @@
 -r base.txt
 
-pre-commit
+pytest
+httpx
