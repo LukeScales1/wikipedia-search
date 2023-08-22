@@ -22,7 +22,7 @@ def fetch_article_list(session: Session, params: ArticleTitlesGet) -> dict:
 
     Check the API docs for more info. https://www.mediawiki.org/wiki/API:Lists/All
     """
-    r = session.get(url=URL, params=params.dict(by_alias=True))
+    r = session.get(url=URL, params=params.model_dump(by_alias=True, mode="json"))
     r.raise_for_status()
 
     return r.json()
@@ -30,7 +30,7 @@ def fetch_article_list(session: Session, params: ArticleTitlesGet) -> dict:
 
 def fetch_article_content(session: Session, params: ContentGet) -> dict:
     """ Get the content of an article from Wikipedia. """
-    r = session.get(url=URL, params=params.dict(by_alias=True))
+    r = session.get(url=URL, params=params.model_dump(by_alias=True, mode="json"))
     r.raise_for_status()
 
     return {"data": r.json()}

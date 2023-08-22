@@ -96,7 +96,7 @@ def fetch_and_add_articles(db_session: Session, params: ArticleTitlesGet) -> lis
     add_articles_bulk(
         session=db_session,
         articles=[
-            Article.from_dict(article_schema.dict())
+            article_schema.to_db_model()
             for article_schema in articles
         ]
     )
@@ -111,6 +111,6 @@ def get_articles_as_schema(db_session: Session, **filter_kwargs) -> list[Article
     """
     db_articles = filter_articles(session=db_session, **filter_kwargs)
     return [
-        ArticleSchema.from_orm(article)
+        ArticleSchema.model_validate(article)
         for article in db_articles
     ]

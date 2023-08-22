@@ -31,9 +31,6 @@ class Actions(Enum):
     QUERY = "query"
 
 
-class DefaultParams(BaseModel):
+class DefaultParams(BaseModel, use_enum_values=True):
     action: Actions = Actions.QUERY
     data_format: DataFormats = Field(alias="format", default=DataFormats.JSON)
-
-    class Config:
-        use_enum_values = True
