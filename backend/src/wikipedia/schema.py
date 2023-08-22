@@ -47,10 +47,6 @@ class ParsedText(BaseModel):
         )
 
 
-class ProcessedText(BaseModel):
-    __root__: list[str]
-
-
 """
 Request Schema
 """
