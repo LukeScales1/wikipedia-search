@@ -23,6 +23,7 @@ Ensure that Docker is [installed](https://docs.docker.com/engine/install/) and t
 [daemon is running](https://docs.docker.com/config/daemon/start/) (it will typically be running automatically, if not
 the following command will complain at you and you can start it manually then).
 In the root directory of the project, run:
+
 ```docker-compose up --build```
 
 This will build the Docker image and run the backend app on port 8000, and the frontend app on port 3000 by default.
@@ -101,4 +102,13 @@ Example result:
 
 ## Running tests
 
-To run the automated tests locally, navigate to the `backend` directory and simply execute `pytest`
+To run the automated tests locally, navigate to the `backend` directory and install the BE project as an editable
+dependency:
+
+```pip install -e .```
+
+Ensure you have the test requirements installed:
+
+```pip install -Ur requirements/test.txt```
+
+Then simply execute `pytest`.
