@@ -18,6 +18,39 @@ install pre-commit hooks, follow these steps:
 
 
 ## Setup
+### Environment variables
+Environment variables will need to be set up for the app to run. You can do this by copying the `.env.template` to a
+file called `.env` in the `envs` directory, and then setting the values as required.
+
+The `POSTGRES_HOST` variable will need to be set to `db` if you are running the app using Docker, or to `localhost` if
+you are running the app locally. To run the app locally, you will also need to set the `POSTGRES_USER` and
+`POSTGRES_PASSWORD` variables to the username and password of your Postgres user.
+
+To set variables locally, you can use Dotenv to load the variables from the `.env` file. To do this, install Dotenv
+using `pip install python-dotenv`, then add the following to the top of the `main.py` file or `settings.py` file:
+
+```python
+from dotenv import load_dotenv
+
+load_dotenv("../envs/.env")
+```
+
+Alternatively you can manually set the variables in your terminal before running the app, e.g.:
+
+```bash
+export POSTGRES_USER=postgres
+export POSTGRES_PASSWORD=password
+...
+```
+
+or in Windows:
+
+```bash
+set POSTGRES_USER=postgres
+set POSTGRES_PASSWORD=password
+...
+```
+
 ### Docker (recommended)
 Ensure that Docker is [installed](https://docs.docker.com/engine/install/) and that the Docker
 [daemon is running](https://docs.docker.com/config/daemon/start/) (it will typically be running automatically, if not
@@ -37,10 +70,11 @@ To run the database locally you will need to install Postgres. Version 13.4 is u
 you use the same for this to work. You can find instructions for your OS at the
 [Postgres website](https://www.postgresql.org/download/).
 
-Once set up, you would need to create a database called `wiki-search` and a user called `postgres` with the password
-`password`. Alternatively, you can change the database connection string in the `alembic.ini` file to point to a
-different database and user, but you will need to reflect that change in the `main.py` file also (until I implement
-environment variables in an upcoming commit).
+Once set up, you can use whatever database, user & password you like (you will need to set these in the `.env` file or
+manually, see above). With your Postgres instance running, you can create the tables by running the
+Alembic migrations. Navigate to the `backend` folder and run:
+
+```alembic upgrade head```
 
 #### Backend
 Requires Python3.9+. Navigate to the `backend` folder and create and activate your virtual environment
@@ -78,24 +112,24 @@ Full list of endpoints and details can be found at
 
 Example search (you may need to change the query to see some results, since you will receive a different set of random
 articles):
-[http://127.0.0.1:8000/search/?q=act](http://127.0.0.1:8000/search?query=act)
+[http://127.0.0.1:8000/search/?query=act](http://127.0.0.1:8000/search?query=act)
 
 Example result:
 ```json
 {
     "results":
-         {
-            "Statue of Cosimo I": 1.6436972762369082,
-            "Trihalomethane": 1.4771313555617704,
-            "Joseph Henry Morris House": 1.3022414039433408,
-            "Neuadd Dwyfor": 1.1306068876621977,
-            "Gutierre Vermúdez": 1.0185666732810175,
-            "Great Bakersfield Fire of 1889": 1.000698806614099,
-            "Eureka Street (novel)": 0.911915592081272,
-            "The Real World: San Francisco":0.7130057951771621,
-            "Laid Back":0.6889075703961695,
-            "Yana Milev":0.3727990368545083
-          }
+         [
+           {"title": "Statue of Cosimo I", "ranking": 1.6436972762369082},
+           {"title": "Trihalomethane", "ranking": 1.4771313555617704},
+           {"title": "Joseph Henry Morris House", "ranking": 1.3022414039433408},
+           {"title": "Neuadd Dwyfor", "ranking": 1.1306068876621977},
+           {"title": "Gutierre Vermúdez", "ranking": 1.0185666732810175},
+           {"title": "Great Bakersfield Fire of 1889", "ranking": 1.000698806614099},
+           {"title": "Eureka Street (novel)", "ranking": 0.911915592081272},
+           {"title": "The Real World: San Francisco", "ranking": 0.7130057951771621},
+           {"title": "Laid Back", "ranking": 0.6889075703961695},
+           {"title": "Yana Milev", "ranking": 0.3727990368545083}
+         ]
 }
 
 ```
