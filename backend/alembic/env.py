@@ -7,6 +7,11 @@ from sqlalchemy import engine_from_config, pool
 # access to the values within the .ini file in use.
 config = context.config
 
+from src.settings import Settings  # noqa: E402
+
+settings = Settings()
+config.set_main_option("sqlalchemy.url", settings.postgres_dsn.unicode_string())
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
