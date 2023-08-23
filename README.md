@@ -2,6 +2,10 @@
 
 Search a random selection of Wikipedia articles.
 
+This was originally a tech challenge I was asked to do for a short term contract. The original spec stated I should spend 3 hours max and that I should not implement any sort of DB (so the index and articles should be loaded on application start and any info needed should be kept in local memory) and without the help of any information retrieval packages (e.g. no Elasticsearch allowed, both indexing and a ranking algorithm had to be implemented manually). The spec asked for the API first and that, if time allowed, some frontend would be nice.
+
+I have since added to this project to better showcase my abilities as a fullstack engineer. I have included a TypeScript React frontend project using Redux, and Dockerized the stack to work with a Postgres instance. The FastAPI backend has been improved quite a bit also.
+
 On launch the app will fetch a number of random articles from the
 Wikipedia API, store them in the Postgres DB instance, and then index them in an inverted index.
 You can then search for terms and the app will return the relevant article titles from those fetched, as ranked by a
