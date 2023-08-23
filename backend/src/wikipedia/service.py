@@ -10,6 +10,7 @@ import requests
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from index.nlp import TextProcessor
 from wikipedia.client import get_and_parse_random_articles
 from wikipedia.models import Article
 from wikipedia.schema import ArticleSchema, ArticleTitlesGet
@@ -83,20 +84,25 @@ def delete_article(session: Session, article: Article):
     session.commit()
 
 
-def fetch_and_add_articles(db_session: Session, params: ArticleTitlesGet) -> list[ArticleSchema]:
+def fetch_and_add_articles(
+        db_session: Session,
+        params: ArticleTitlesGet,
+        text_processor: TextProcessor,
+) -> list[ArticleSchema]:
     """
     Fetches articles from Wikipedia and adds them to the database.
 
-    :param db_session:
-    :param params:
+    :param db_session: The database session.
+    :param params: The parameters to pass to the Wikipedia API.
+    :param text_processor: The text processor to use to process the articles.
     """
     with requests.Session() as session:
-        articles = get_and_parse_random_articles(session, params)
+        articles = get_and_parse_random_articles(session, params, text_processor)
     logger.info(f"{len(articles)} articles fetched!")
     add_articles_bulk(
         session=db_session,
         articles=[
-            Article.from_dict(article_schema.dict())
+            article_schema.to_db_model()
             for article_schema in articles
         ]
     )
@@ -111,6 +117,6 @@ def get_articles_as_schema(db_session: Session, **filter_kwargs) -> list[Article
     """
     db_articles = filter_articles(session=db_session, **filter_kwargs)
     return [
-        ArticleSchema.from_orm(article)
+        ArticleSchema.model_validate(article)
         for article in db_articles
     ]

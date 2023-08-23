@@ -3,8 +3,9 @@ from __future__ import annotations
 from enum import Enum
 from typing import Optional
 
+from pydantic import BaseModel, Field, field_validator
+
 from common.schema import Actions, DefaultParams
-from pydantic import BaseModel, Field, validator
 from wikipedia.models import Article
 
 
@@ -25,11 +26,11 @@ def reformat_tokenized_content(content: str) -> list[str]:
     return re.split(r"[,\s]+", re.sub(r"[\[\]{}']", "", content))
 
 
-class ArticleSchema(BaseModel):
+class ArticleSchema(BaseModel, from_attributes=True):
     title: str
     tokenized_content: Optional[list[str]]
 
-    @validator('tokenized_content', pre=True)
+    @field_validator('tokenized_content', mode="before")
     def validate_tokenized_content(cls, value: str | list[str] | None):
         """
         Validate the tokenized content of an article. If the value is a string, it is assumed to be a comma-separated
@@ -41,9 +42,6 @@ class ArticleSchema(BaseModel):
             return reformat_tokenized_content(value)
 
         return value
-
-    class Config:
-        orm_mode = True
 
     def to_db_model(self) -> Article:
         """ Convert an ArticleSchema to a DB model. """
