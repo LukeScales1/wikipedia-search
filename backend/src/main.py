@@ -14,12 +14,14 @@ from sqlalchemy.orm import sessionmaker
 import wikipedia.service as article_service
 from index.indexer import create_or_update_inverted_index, rank_documents
 from index.schema import SearchResult
-from settings import DB_CONNECTION, NUMBER_OF_ARTICLES, text_processor
+from settings import NUMBER_OF_ARTICLES, Settings, text_processor
 from wikipedia.schema import ArticleSchema, ArticleTitlesGet
 
 logger = logging.getLogger(__name__)
 
-engine = create_engine(DB_CONNECTION)
+settings = Settings()
+
+engine = create_engine(settings.pg_dsn.unicode_string())
 db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
