@@ -31,11 +31,11 @@ class TextProcessorSource(EnvSettingsSource):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
-    postgres_user: str
-    postgres_password: str
-    postgres_db: str
-    postgres_host: str
-    postgres_port: int
+    postgres_user: str = "test"
+    postgres_password: str = "test"
+    postgres_db: str = "test"
+    postgres_host: str = "test"
+    postgres_port: int = 0000
     default_number_of_articles: int = 10
     text_processor: TextProcessor = lemmatize
 
