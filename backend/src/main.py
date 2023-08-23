@@ -14,7 +14,7 @@ from sqlalchemy.orm import sessionmaker
 import wikipedia.service as article_service
 from index.indexer import create_or_update_inverted_index, rank_documents
 from index.schema import SearchResult
-from settings import NUMBER_OF_ARTICLES, Settings, text_processor
+from settings import Settings, text_processor
 from wikipedia.schema import ArticleSchema, ArticleTitlesGet
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ def _index_documents(db_session: DBSession):
         logger.info("No articles in DB. Fetching new articles...")
         articles = article_service.fetch_and_add_articles(
             db_session=db_session,
-            params=ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES)
+            params=ArticleTitlesGet(rnlimit=settings.default_number_of_articles)
         )
 
     index_start_time = time.time()
@@ -120,7 +120,7 @@ async def fetch_new_articles(db_session: Annotated[DBSession, Depends(get_db_ses
     :param db_session: The database session dependency.
     """
     new_articles = article_service.fetch_and_add_articles(
-        db_session=db_session, params=ArticleTitlesGet(rnlimit=NUMBER_OF_ARTICLES)
+        db_session=db_session, params=ArticleTitlesGet(rnlimit=settings.default_number_of_articles)
     )
     create_or_update_inverted_index(
         articles=new_articles
