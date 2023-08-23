@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from requests.sessions import Session
 
-from settings import text_processor
+from index.nlp import TextProcessor
 from wikipedia.parser import parse_article_html_or_none, parse_article_titles, parse_text_from_html
 from wikipedia.schema import ArticleSchema, ArticleTitlesGet, ContentGet
 
@@ -46,6 +46,7 @@ def fetch_parsed_text(session: Session, page_name: str):
 def get_and_parse_random_articles(
         session: Session,
         params: ArticleTitlesGet,
+        text_processor: TextProcessor,
 ) -> list[ArticleSchema]:
     """ Helper function for fetching and processing a list of random articles. """
     articles = fetch_article_list(session, params)
