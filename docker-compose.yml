@@ -16,15 +16,16 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    env_file:
+      - envs/.env
   db:
     image: "postgres:13.4"
     container_name: db
     restart: always
     ports:
       - "5432:5432"
-    environment:
-      POSTGRES_PASSWORD: "password"
-      POSTGRES_DB: "wiki-search"
+    env_file:
+      - envs/.env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U postgres" ]
       interval: 1s

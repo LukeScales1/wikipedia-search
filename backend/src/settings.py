@@ -31,9 +31,24 @@ class TextProcessorSource(EnvSettingsSource):
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file='.env', env_file_encoding='utf-8')
 
-    pg_dsn: PostgresDsn = 'postgresql+psycopg2://postgres:password@db:5432/wiki-search'
+    postgres_user: str
+    postgres_password: str
+    postgres_db: str
+    postgres_host: str
+    postgres_port: int
     default_number_of_articles: int = 10
     text_processor: TextProcessor = lemmatize
+
+    @property
+    def postgres_dsn(self) -> PostgresDsn:
+        return PostgresDsn.build(
+            scheme='postgresql+psycopg2',
+            username=self.postgres_user,
+            password=self.postgres_password,
+            host=self.postgres_host,
+            port=self.postgres_port,
+            path=self.postgres_db,
+        )
 
     @classmethod
     def settings_customise_sources(

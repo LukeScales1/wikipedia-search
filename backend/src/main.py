@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 settings = Settings()
 
-engine = create_engine(settings.pg_dsn.unicode_string())
+engine = create_engine(settings.postgres_dsn.unicode_string())
 db_session_maker = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
