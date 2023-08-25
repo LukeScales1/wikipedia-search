@@ -1,5 +1,5 @@
 import React from 'react'
-import {Article, SearchResult } from "../../types";
+import { Article, SearchResult } from "../../types";
 import { Spinner } from "@chakra-ui/react";
 
 

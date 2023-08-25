@@ -8,10 +8,16 @@ export const apiSlice = createApi({
     getArticles: builder.query<Article[], string>({
       query: () => '/articles'
     }),
+    postArticles: builder.mutation({
+      query: () => ({
+        url: '/articles',
+        method: 'POST',
+      })
+    }),
     getSearchResults: builder.query<SearchResult[], string>({
       query: (searchTerms: string) => `/search?query=${searchTerms}`
     }),
   })
 })
 
-export const { useGetArticlesQuery, useGetSearchResultsQuery } = apiSlice
+export const { useGetArticlesQuery, usePostArticlesMutation, useGetSearchResultsQuery } = apiSlice
