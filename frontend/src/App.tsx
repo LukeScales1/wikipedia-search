@@ -24,7 +24,7 @@ function App() {
     { isLoading: isUpdating },
   ] = usePostArticlesMutation();
 
-  const isSearchingDisabled = !!articlesError || isLoadingArticles || !!searchResultsError || isLoadingSearchResults;
+  const isSearchingDisabled = isUpdating || !!articlesError || isLoadingArticles || !!searchResultsError || isLoadingSearchResults;
 
   return (
     <div className="App">
@@ -39,7 +39,7 @@ function App() {
       <Articles
         articles={articles}
         searchResults={searchResults}
-        isLoading={isLoadingArticles}
+        isLoading={isLoadingArticles || isUpdating}
         isError={!!articlesError}
       />
     </div>
