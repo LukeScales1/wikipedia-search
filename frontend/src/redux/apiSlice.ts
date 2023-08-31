@@ -3,7 +3,7 @@ import { Article, SearchResult } from "../types";
 
 export const apiSlice = createApi({
   reducerPath: 'api',
-  baseQuery: fetchBaseQuery({ baseUrl: 'http://localhost:8000' }),
+  baseQuery: fetchBaseQuery({ baseUrl: process.env.REACT_APP_WIKI_API_URL }),
   tagTypes: ['Articles'],
   endpoints: builder => ({
     getArticles: builder.query<Article[], string>({
