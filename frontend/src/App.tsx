@@ -1,9 +1,9 @@
 import React from 'react';
 import logo from './logo.svg';
-import './App.css';
+import './App.scss';
 import { Articles } from "./features/articles/Articles";
 import { Search } from "./features/search/Search";
-import { useGetArticlesQuery, useGetSearchResultsQuery } from "./redux/apiSlice";
+import { useGetArticlesQuery, usePostArticlesMutation, useGetSearchResultsQuery } from "./redux/apiSlice";
 
 
 function App() {
@@ -19,24 +19,29 @@ function App() {
     error: searchResultsError,
     isLoading: isLoadingSearchResults,
   } = useGetSearchResultsQuery(searchTerms);
+  const [
+    updateArticles,
+    { isLoading: isUpdating },
+  ] = usePostArticlesMutation();
 
-  const isSearchingDisabled = !!articlesError || isLoadingArticles || !!searchResultsError || isLoadingSearchResults;
+  const isSearchingDisabled = isUpdating || !!articlesError || isLoadingArticles || !!searchResultsError || isLoadingSearchResults;
 
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <Search
-          updateSearchTerms={setSearchTerms}
-          isSearchingDisabled={isSearchingDisabled}
-        />
-        <Articles
-          articles={articles}
-          searchResults={searchResults}
-          isLoading={isLoadingArticles}
-          isError={!!articlesError}
-        />
-      </header>
+      <div className="logoContainer">
+        <img src={logo} alt="logo" onClick={() => updateArticles(null)} />
+        <p><i>Click the react logo to load more articles</i>☝️!</p>
+      </div>
+      <Search
+        updateSearchTerms={setSearchTerms}
+        isSearchingDisabled={isSearchingDisabled}
+      />
+      <Articles
+        articles={articles}
+        searchResults={searchResults}
+        isLoading={isLoadingArticles || isUpdating}
+        isError={!!articlesError}
+      />
     </div>
   );
 }
