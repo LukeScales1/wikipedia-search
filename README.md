@@ -70,7 +70,7 @@ database and tables.
 
 ### Locally (not recommended, but instructions are here anyway)
 #### Database
-To run the database locally you will need to install Postgres. Version 13.4 is used in this app, and it's recommended
+To run the database locally you will need to install Postgres. Version 15.6 is used in this app, and it's recommended
 you use the same for this to work. You can find instructions for your OS at the
 [Postgres website](https://www.postgresql.org/download/).
 
@@ -105,12 +105,12 @@ This will start the React app on port 3000 by default.
 
 ## Using the app
 
-The frontend React app will show a list of the random articles that have been fetched from Wikipedia.
-For now, you can't search for relevant text to the articles that are displayed on the frontend (since I have not yet
-added a search term input field), but the logic has been implemented to facilitate this which highlights relevant
-articles. You can click then click on a highlighted article to view it in full on Wikipedia. Search input to be added in
-an upcoming commit.
+The frontend React app will show a list of the random articles that have been fetched from Wikipedia. If you input a 
+search term in the search field, the application will highlight the relevant articles based on the search term. You can 
+then click on a highlighted article to view it in full on Wikipedia. To load more articles from Wikipedia, and add them
+to the index, click the React icon.
 
+### Backend API
 Full list of endpoints and details can be found at
 [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
 

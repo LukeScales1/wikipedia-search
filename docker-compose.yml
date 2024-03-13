@@ -4,7 +4,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: backend
+    container_name: wiki-backend
     command: bash -c "cd ../ && alembic upgrade head && cd src/ && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
@@ -19,8 +19,8 @@ services:
     env_file:
       - envs/.env
   db:
-    image: "postgres:13.4"
-    container_name: db
+    image: "postgres:15.6"
+    container_name: wiki-db
     restart: always
     ports:
       - "5432:5432"
@@ -35,7 +35,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: frontend
+    container_name: wiki-frontend
     command: npm run dev
     ports:
       - "3000:3000"
@@ -43,3 +43,6 @@ services:
       - ./frontend:/app
     env_file:
       - envs/.env
+
+volumes:
+  pgdata:
